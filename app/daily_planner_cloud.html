@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Daily Planner</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  // ---- CONFIG: fill these in with your Supabase project's values ----
+  // Dashboard → Settings → API → Project URL, and the "anon public" key
+  const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+</script>
+<style>
+  :root {
+    --dark:#2B2B2B; --green:#3F6B56; --greenBg:#F0F5F2; --tan:#B8825F; --tanBg:#FFF9F2;
+    --blue:#4A5A8A; --blueBg:#F0F1F8; --grey:#999999; --greyBg:#F7F7F5; --gold:#D9A441;
+    --red:#D94F4F; --redBg:#FDF2F2; --bg:#FDFCF9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg); color: var(--dark); padding-bottom: 60px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 40px; }
+  .top { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid var(--dark); padding-bottom:12px; margin-bottom:14px; gap:10px; flex-wrap:wrap; }
+  .iam-row { display:flex; align-items:baseline; gap:6px; flex:1; min-width:220px; }
+  .iam-label { font-size:22px; font-weight:800; white-space:nowrap; }
+  .iam-input { border:none; border-bottom:1px dotted #999; background:transparent; font-size:15px; padding:4px 2px; flex:1; min-width:80px; font-family:inherit; }
+  .iam-input:focus { outline:none; border-bottom:1px solid var(--dark); }
+  .date-block { text-align:right; font-size:12px; color:#777; }
+  .date-block .big { font-size:14px; color:var(--dark); font-weight:700; }
+  .recovery-line { margin-top:6px; }
+  .recovery-toggle { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--red); cursor:pointer; }
+  .rotation { font-size:11px; color:#888; border-bottom:1px dotted #ddd; padding-bottom:10px; margin-bottom:14px; }
+  .rotation b { color:#555; }
+  .rotation .hl { color:var(--red); font-weight:800; }
+
+  .card { border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .card h3 { margin:0 0 10px; font-size:13px; letter-spacing:0.5px; }
+  .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+  @media (max-width:600px) { .grid3 { grid-template-columns: 1fr; } .priorities-grid { grid-template-columns: 1fr !important; } }
+
+  .priorities-grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:12px; }
+  .pbox { border:2px dotted var(--tan); background:var(--tanBg); border-radius:8px; padding:12px; }
+  .pbox.dim { border-color:#ddd; background:#f5f5f5; opacity:0.6; }
+  .pbox .letter { font-weight:800; color:var(--tan); font-size:16px; display:block; margin-bottom:4px; }
+  .pbox.dim .letter { color:#bbb; }
+  .pbox textarea, .pbox input[type=text] { width:100%; border:none; background:transparent; font-family:inherit; font-size:13px; resize:none; }
+  .pbox textarea:focus, .pbox input:focus { outline:none; }
+  .pbox .conseq { font-size:11px; color:#999; font-style:italic; margin-top:6px; border:none; background:transparent; width:100%; font-family:inherit; }
+  .pbox .done-row { margin-top:8px; font-size:11px; }
+
+  .habit-card { background:var(--greenBg); border:2px solid var(--green); }
+  .habit-card h3 { color:var(--green); }
+  .habit-row { display:flex; align-items:center; gap:8px; font-size:14px; margin-bottom:10px; }
+  .habit-row input[type=checkbox] { width:18px; height:18px; accent-color:var(--green); }
+
+  .braindump-card { border:2px solid var(--dark); min-height:130px; }
+  .braindump-card textarea { width:100%; min-height:110px; border:none; background:transparent; font-family:inherit; font-size:13px; resize:vertical; }
+  .braindump-card textarea:focus { outline:none; }
+
+  .feel-card { background:var(--blueBg); border:2px solid var(--blue); }
+  .feel-card h3 { color:var(--blue); }
+  .feel-opts { display:flex; justify-content:space-between; }
+  .feel-opt { text-align:center; font-size:22px; cursor:pointer; border-radius:6px; padding:4px 2px; flex:1; }
+  .feel-opt.sel { background:var(--blue); }
+  .feel-opt .lbl { font-size:9px; color:#666; }
+  .feel-opt.sel .lbl { color:#fff; font-weight:700; }
+
+  .energy-card { background:var(--tanBg); border:2px solid var(--tan); }
+  .energy-card h3 { color:var(--tan); }
+  .energy-bar { display:flex; gap:5px; }
+  .energy-seg { flex:1; height:24px; border:2px solid var(--tan); border-radius:4px; cursor:pointer; }
+  .energy-seg.on { background:var(--tan); }
+
+  .fumble-card { background:var(--greyBg); border:2px solid var(--grey); }
+  .fumble-card h3 { color:#666; }
+  .fumble-card input { width:100%; border:none; border-bottom:1px dotted #bbb; background:transparent; font-family:inherit; font-size:13px; padding:5px 0; margin-bottom:6px; }
+  .fumble-card input:focus { outline:none; }
+
+  .carried-card { background:#FFF7E8; border:2px dashed var(--gold); }
+  .carried-card h3 { color:#9a6d00; }
+  .carried-row { display:flex; align-items:flex-start; gap:8px; font-size:13px; margin-bottom:8px; }
+  .carried-row input[type=checkbox] { margin-top:2px; width:16px; height:16px; accent-color:var(--gold); }
+  .carried-row .tag { font-size:10px; color:#9a6d00; display:block; }
+
+  .lane-card { border:2px solid var(--dark); }
+  .lane-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .lane-row input[type=checkbox] { width:16px; height:16px; accent-color:var(--dark); flex-shrink:0; }
+  .lane-row input[type=text] { flex:1; border:none; border-bottom:1px dotted #ccc; background:transparent; font-family:inherit; font-size:13px; padding:4px 0; }
+  .lane-row input[type=text]:focus { outline:none; }
+  .lane-title-input { width:100%; border:none; background:transparent; font-family:inherit; font-weight:800; font-size:13px; margin-bottom:8px; padding:0; }
+  .lane-title-input:focus { outline:none; }
+
+  .win-card { background:var(--greenBg); border:2px solid var(--green); }
+  .win-card h3 { color:var(--green); }
+  .win-card label { font-size:11px; color:#666; display:block; margin-bottom:2px; }
+  .win-card input { width:100%; border:none; border-bottom:1px dotted #a8c3b6; background:transparent; font-family:inherit; font-size:13px; padding:5px 0; margin-bottom:10px; }
+  .win-card input:focus { outline:none; }
+
+  .footer-note { text-align:center; font-size:10px; color:#bbb; letter-spacing:1px; margin-top:10px; }
+
+  /* Modal */
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:flex-end; justify-content:center; z-index:50; }
+  @media (min-width:600px){ .overlay{ align-items:center; } }
+  .modal { background:#fff; width:100%; max-width:520px; border-radius:16px 16px 0 0; padding:20px; max-height:85vh; overflow-y:auto; }
+  @media (min-width:600px){ .modal{ border-radius:16px; } }
+  .modal h2 { margin:0 0 4px; font-size:19px; }
+  .modal p.sub { color:#777; font-size:13px; margin:0 0 16px; }
+  .modal .item { display:flex; align-items:flex-start; gap:10px; padding:10px; border:1px solid #eee; border-radius:8px; margin-bottom:8px; }
+  .modal .item input[type=checkbox] { width:20px; height:20px; margin-top:2px; accent-color:var(--green); flex-shrink:0; }
+  .modal .item .txt { font-size:14px; }
+  .modal .item .src { font-size:10px; color:#999; display:block; }
+  .modal-actions { display:flex; gap:10px; margin:14px 0; }
+  .modal-actions button { flex:1; padding:10px; border-radius:8px; border:1px solid #ccc; background:#f5f5f5; font-size:13px; font-weight:600; }
+  .modal .start-btn { width:100%; padding:14px; border:none; border-radius:10px; background:var(--green); color:#fff; font-size:16px; font-weight:700; margin-top:8px; }
+  .recovery-banner { background:var(--redBg); border:2px dashed var(--red); border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:13px; color:#a53a3a; }
+  .recovery-banner .rb-actions { display:flex; gap:10px; margin-top:10px; }
+  .recovery-banner button { flex:1; padding:9px; border-radius:7px; border:none; font-weight:700; font-size:13px; cursor:pointer; }
+  .rb-yes { background:var(--red); color:#fff; }
+  .rb-no { background:#fff; border:1px solid var(--red) !important; color:var(--red); }
+  .loading { text-align:center; padding:60px 20px; color:#999; }
+  .help-note { font-size:11px; color:#aaa; text-align:center; margin:18px 0 4px; line-height:1.5; }
+
+  .auth-wrap { max-width:360px; margin:80px auto; padding:0 20px; }
+  .auth-card { border:2px solid var(--dark); border-radius:12px; padding:24px; background:#fff; }
+  .auth-card h2 { margin:0 0 6px; font-size:22px; }
+  .auth-card p.sub { color:#777; font-size:13px; margin:0 0 20px; }
+  .auth-card input { width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:15px; margin-bottom:12px; font-family:inherit; }
+  .auth-card input:focus { outline:none; border-color:var(--green); }
+  .auth-card button { width:100%; padding:13px; border:none; border-radius:8px; background:var(--green); color:#fff; font-size:15px; font-weight:700; margin-bottom:10px; cursor:pointer; }
+  .auth-card .switch { text-align:center; font-size:13px; color:#666; }
+  .auth-card .switch a { color:var(--green); font-weight:700; text-decoration:none; }
+  .auth-error { background:var(--redBg); color:var(--red); border-radius:8px; padding:10px 12px; font-size:13px; margin-bottom:12px; }
+  .auth-note { background:var(--greyBg); color:#777; border-radius:8px; padding:10px 12px; font-size:12px; margin-bottom:14px; }
+  .signout-row { text-align:right; margin-bottom:6px; }
+  .signout-row button { border:none; background:none; color:#999; font-size:11px; text-decoration:underline; cursor:pointer; padding:4px; }
+</style>
+</head>
+<body>
+<div id="app" class="wrap"><div class="loading">Loading your planner…</div></div>
+
+<script>
+const ROTATION = { 1:"Book Keeping", 2:"Administration", 3:"Student Ministry", 4:"Personal", 5:"Lopez Home", 6:"Family", 0:"Family" };
+const ROTATION_LABEL_SHORT = { 1:"Mon: Book Keeping", 2:"Tue: Admin", 3:"Wed: Student Ministry", 4:"Thu: Personal", 5:"Fri: Lopez Home", 6:"Sat/Sun: Family", 0:"Sat/Sun: Family" };
+const RECOVERY_START = "2026-07-29", RECOVERY_END = "2026-08-15";
+
+// Pre-planned content from the Weekly Reviews (Jul 13 – Aug 2), mapped to each specific date.
+// This only fills a date's record the FIRST time it's ever opened — after that, your edits are yours.
+const SEED_DATA = {
+  "2026-07-13": {
+    priorities: [
+      { text: "Email 50 customers — ACH transition (GLS)", consequence: "if this slips... falls behind before deadline crunch" },
+      { text: "", consequence: "" }, { text: "", consequence: "" }
+    ],
+    gls: ["Email 50 customers — ACH", "Process daily cash log", ""],
+    focus: ["Book Keeping deferred to Mon 7/20 — no action needed today", "", ""],
+    home: ["", "", ""]
+  },
+  "2026-07-14": {
+    priorities: [
+      { text: "Email 50 customers — ACH transition (GLS)", consequence: "if this slips... falls behind before deadline crunch" },
+      { text: "AC unit follow-up call + set up Costco water delivery (Admin)", consequence: "if this slips... AC issue drags another week" },
+      { text: "Protect family movie night 6–9pm — phone away", consequence: "if this slips... promised time with Whitney & Joelle slides again" }
+    ],
+    gls: ["Email 50 customers — ACH", "Process daily cash log", ""],
+    focus: ["Call re: AC unit follow-up", "Set up Costco water delivery (Thu)", ""],
+    home: ["Movie night 6–9pm w/ Whitney & Joelle", "", ""]
+  },
+  "2026-07-15": {
+    priorities: [
+      { text: "Email 50 customers — ACH transition (GLS)", consequence: "if this slips... falls behind before deadline crunch" },
+      { text: "Print July/Aug/Sept lessons for classroom (Student Ministry)", consequence: "if this slips... volunteers have no materials Sunday" },
+      { text: "Clean & organize the ministry room", consequence: "if this slips... room stays cluttered into fall" }
+    ],
+    gls: ["Email 50 customers — ACH", "Process daily cash log", ""],
+    focus: ["Print July/Aug/Sept lessons", "Clean & organize room", ""],
+    home: ["", "", ""]
+  },
+  "2026-07-16": {
+    priorities: [
+      { text: "Email 50 customers — ACH transition (GLS)", consequence: "if this slips... falls behind before deadline crunch" },
+      { text: "Sermon prep for 7/19 message — introducing the book of James (Personal)", consequence: "if this slips... unprepared for Sunday" },
+      { text: "Protect prayer time 6–7pm", consequence: "if this slips... one more week without it" }
+    ],
+    gls: ["Email 50 customers — ACH", "Process daily cash log", ""],
+    focus: ["Sermon prep for 7/19 message", "", ""],
+    home: ["Prayer 6–7pm (protected block)", "", ""]
+  },
+  "2026-07-17": {
+    priorities: [
+      { text: "Email 50 customers — ACH transition (GLS)", consequence: "if this slips... falls behind before deadline crunch" },
+      { text: "Set up Joelle's bed & bed swing (Lopez Home)", consequence: "if this slips... promised to Whitney twice already" },
+      { text: "Organize storage rack", consequence: "if this slips... clutter keeps piling" }
+    ],
+    gls: ["Email 50 customers — ACH", "Process daily cash log", ""],
+    focus: ["Set up Joelle's bed & bed swing", "Organize storage rack", ""],
+    home: ["", "", ""]
+  },
+  "2026-07-18": {
+    priorities: [
+      { text: "Sabbath — nothing scheduled. Rest.", consequence: "" },
+      { text: "", consequence: "" }, { text: "", consequence: "" }
+    ],
+    gls: ["", "", ""], focus: ["", "", ""], home: ["Rest. No tasks today.", "", ""]
+  },
+  "2026-07-19": {
+    priorities: [
+      { text: "Church 8am–1pm — preaching on the book of James", consequence: "fixed commitment" },
+      { text: "", consequence: "" }, { text: "", consequence: "" }
+    ],
+    gls: ["", "", ""], focus: ["", "", ""], home: ["Family afternoon after church", "", ""]
+  },
+  "2026-07-20": {
+    priorities: [
+      { text: "Move $2k unapplied funds out (due Jul 25 — do today)", consequence: "if this slips... misses the Jul 25 deadline" },
+      { text: "Complete Hub Reports Jan–Jun (Book Keeping)", consequence: "if this slips... backlog carries into recovery" },
+      { text: "Start learning Aplos + reimburse Whitney + submit reports", consequence: "if this slips... last full week gets tighter" }
+    ],
+    gls: ["Move $2k unapplied funds", "Continue ACH emails (50/day)", ""],
+    focus: ["Complete Hub Reports Jan–Jun", "Start learning Aplos", "Reimburse Whitney + submit reports"],
+    home: ["", "", ""]
+  },
+  "2026-07-21": {
+    priorities: [
+      { text: "Email 50 customers — ACH transition (GLS)", consequence: "if this slips... falls behind before deadline crunch" },
+      { text: "Get church Google phone number (Admin)", consequence: "if this slips... phone situation stays unresolved" },
+      { text: "Finalize phone plan + protect movie night 6–9pm", consequence: "if this slips... promised time slides again" }
+    ],
+    gls: ["Email 50 customers — ACH", "Process daily cash log", ""],
+    focus: ["Get church Google phone number", "Finalize phone plan", ""],
+    home: ["Movie night 6–9pm w/ Whitney & Joelle", "", ""]
+  },
+  "2026-07-22": {
+    priorities: [
+      { text: "Email 50 customers — ACH transition (GLS)", consequence: "if this slips... falls behind before deadline crunch" },
+      { text: "Plan August meetup (Student Ministry)", consequence: "if this slips... volunteers lack a clear date to plan around" },
+      { text: "", consequence: "" }
+    ],
+    gls: ["Email 50 customers — ACH", "Process daily cash log", ""],
+    focus: ["Plan August meetup", "", ""],
+    home: ["", "", ""]
+  },
+  "2026-07-23": {
+    priorities: [
+      { text: "Email 50 customers — ACH transition (GLS)", consequence: "if this slips... falls behind before deadline crunch" },
+      { text: "Refill ADHD medication — call doctor (Personal)", consequence: "if this slips... risk running out before surgery" },
+      { text: "Keep up with school lessons + protect prayer 6–7pm", consequence: "if this slips... falls further behind" }
+    ],
+    gls: ["Email 50 customers — ACH", "Process daily cash log", ""],
+    focus: ["Refill ADHD meds — call doctor", "Keep up with school lessons", ""],
+    home: ["Prayer 6–7pm (protected block)", "", ""]
+  },
+  "2026-07-24": {
+    priorities: [
+      { text: "Email 50 customers — ACH transition (GLS)", consequence: "if this slips... falls behind before deadline crunch" },
+      { text: "Clean bathroom/fridge (Lopez Home)", consequence: "if this slips... less time once recovery starts" },
+      { text: "Start clearing apartment for remodel", consequence: "if this slips... piles up during recovery" }
+    ],
+    gls: ["Email 50 customers — ACH", "Process daily cash log", ""],
+    focus: ["Clean bathroom/fridge", "Start clearing apartment for remodel", ""],
+    home: ["", "", ""]
+  },
+  "2026-07-25": {
+    priorities: [
+      { text: "Sabbath — nothing scheduled ($2k deadline already handled Monday)", consequence: "" },
+      { text: "", consequence: "" }, { text: "", consequence: "" }
+    ],
+    gls: ["", "", ""], focus: ["", "", ""], home: ["Rest. No tasks today.", "", ""]
+  },
+  "2026-07-26": {
+    priorities: [
+      { text: "Church 8am–1pm", consequence: "fixed commitment" },
+      { text: "Staff meeting 5–7:30pm today", consequence: "fixed commitment" },
+      { text: "", consequence: "" }
+    ],
+    gls: ["", "", ""], focus: ["", "", ""], home: ["Shorter family window today — staff meeting at 5pm", "", ""]
+  },
+  "2026-07-27": {
+    priorities: [
+      { text: "Pre-op logistics: pack hospital bag, confirm who's covering Joelle", consequence: "if this slips... scrambling right before surgery" },
+      { text: "Confirm GLS work coverage/leave is squared away", consequence: "if this slips... work stress bleeds into recovery" },
+      { text: "", consequence: "" }
+    ],
+    gls: ["Wrap up loose ends before medical leave", "", ""],
+    focus: ["Pack hospital bag", "Confirm childcare coverage for Joelle", ""],
+    home: ["", "", ""],
+    recoveryMode: false
+  },
+  "2026-07-28": {
+    priorities: [
+      { text: "Final pre-op confirmations (arrival time, fasting instructions, ride to hospital)", consequence: "if this slips... morning-of chaos" },
+      { text: "Last GLS handoff before leave", consequence: "" },
+      { text: "Protect time with Whitney & Joelle tonight", consequence: "if this slips... last normal evening for weeks slides by" }
+    ],
+    gls: ["Final work handoff before leave", "", ""],
+    focus: ["Confirm surgery time + fasting instructions", "Confirm ride to/from hospital", ""],
+    home: ["Movie night (if up for it) w/ Whitney & Joelle", "", ""],
+    recoveryMode: false
+  },
+  "2026-07-29": {
+    priorities: [
+      { text: "Today is surgery day. The only job is showing up and letting the team work.", consequence: "if this slips... n/a — just get through today" },
+      { text: "", consequence: "" }, { text: "", consequence: "" }
+    ],
+    gls: ["Not working today — surgery day", "", ""],
+    focus: ["Follow hospital instructions", "Rest after the procedure", ""],
+    home: ["Whitney/family handling everything else today", "", ""],
+    recoveryMode: true
+  },
+  "2026-07-30": {
+    priorities: [
+      { text: "Rest. Take meds/antibiotics as prescribed. Short walk only if cleared by doctor.", consequence: "if this slips... recovery setback — this is the only job today" },
+      { text: "", consequence: "" }, { text: "", consequence: "" }
+    ],
+    gls: ["Not working this week — on medical leave", "", ""],
+    focus: ["Rest", "Take meds on schedule", "Stay hydrated"],
+    home: ["Let Whitney/family help — without guilt", "Light stretching only if cleared", ""],
+    recoveryMode: true
+  },
+  "2026-07-31": {
+    priorities: [
+      { text: "Rest. Follow post-op instructions.", consequence: "if this slips... recovery setback" },
+      { text: "", consequence: "" }, { text: "", consequence: "" }
+    ],
+    gls: ["Not working this week — on medical leave", "", ""],
+    focus: ["Rest", "Take meds on schedule", ""],
+    home: ["Let Whitney/family help — without guilt", "", ""],
+    recoveryMode: true
+  },
+  "2026-08-01": {
+    priorities: [
+      { text: "Sabbath + recovery. Rest fully.", consequence: "" },
+      { text: "", consequence: "" }, { text: "", consequence: "" }
+    ],
+    gls: ["", "", ""], focus: ["Rest", "", ""], home: ["", "", ""],
+    recoveryMode: true
+  },
+  "2026-08-02": {
+    priorities: [
+      { text: "Recovery continues. Attend church only if you feel up to it — no obligation.", consequence: "" },
+      { text: "", consequence: "" }, { text: "", consequence: "" }
+    ],
+    gls: ["", "", ""], focus: ["Rest", "", ""], home: ["Family time as energy allows", "", ""],
+    recoveryMode: true
+  }
+};
+
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
+}
+function dowOf(dateStr) { return new Date(dateStr + "T12:00:00").getDay(); }
+function inRecoveryWindow(dateStr) { return dateStr >= RECOVERY_START && dateStr <= RECOVERY_END; }
+
+function blankRecord(dateStr) {
+  const dow = dowOf(dateStr);
+  const rec = {
+    date: dateStr,
+    iam: "",
+    recoveryMode: false,
+    recoveryConfirmed: false,
+    focusCategory: ROTATION[dow],
+    priorities: [
+      { id:"A", text:"", consequence:"", done:false },
+      { id:"B", text:"", consequence:"", done:false },
+      { id:"C", text:"", consequence:"", done:false }
+    ],
+    habits: { walk:false, water:false, protein:false, bible:false, teeth:false },
+    brainDump: "",
+    feeling: "",
+    energy: 0,
+    fumbles: ["", ""],
+    lanes: {
+      glsTitle: "GLS (Work — daily)",
+      gls: [ {text:"",done:false}, {text:"",done:false}, {text:"",done:false} ],
+      focus: [ {text:"",done:false}, {text:"",done:false}, {text:"",done:false} ],
+      home: [ {text:"",done:false}, {text:"",done:false}, {text:"",done:false} ]
+    },
+    carried: [],
+    winProud: "",
+    winGrateful: ""
+  };
+
+  const seed = SEED_DATA[dateStr];
+  if (seed) {
+    if (seed.priorities) {
+      seed.priorities.forEach((p, i) => {
+        if (rec.priorities[i]) { rec.priorities[i].text = p.text || ""; rec.priorities[i].consequence = p.consequence || ""; }
+      });
+    }
+    if (seed.gls) seed.gls.forEach((t, i) => { if (rec.lanes.gls[i]) rec.lanes.gls[i].text = t; });
+    if (seed.focus) seed.focus.forEach((t, i) => { if (rec.lanes.focus[i]) rec.lanes.focus[i].text = t; });
+    if (seed.home) seed.home.forEach((t, i) => { if (rec.lanes.home[i]) rec.lanes.home[i].text = t; });
+    if (typeof seed.recoveryMode === 'boolean') { rec.recoveryMode = seed.recoveryMode; rec.recoveryConfirmed = true; }
+  }
+  return rec;
+}
+
+let state = null;
+let pendingReview = null; // {yesterday, items:[{text,src,carry}], todayDraft}
+let currentUser = null;
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+async function loadRecord(dateStr) {
+  try {
+    const { data, error } = await sb.from('planner_days')
+      .select('data').eq('user_id', currentUser.id).eq('date', dateStr).maybeSingle();
+    if (error || !data) return null;
+    return data.data;
+  } catch (e) { return null; }
+}
+async function saveRecord(rec) {
+  try {
+    await sb.from('planner_days').upsert({
+      user_id: currentUser.id, date: rec.date, data: rec
+    }, { onConflict: 'user_id,date' });
+  } catch (e) { console.error('save failed', e); }
+}
+async function getMeta() {
+  try {
+    const { data, error } = await sb.from('planner_meta')
+      .select('last_date').eq('user_id', currentUser.id).maybeSingle();
+    if (error || !data) return null;
+    return { lastDate: data.last_date };
+  } catch (e) { return null; }
+}
+async function setMeta(meta) {
+  try {
+    await sb.from('planner_meta').upsert({
+      user_id: currentUser.id, last_date: meta.lastDate
+    }, { onConflict: 'user_id' });
+  } catch (e) { console.error('meta save failed', e); }
+}
+
+function collectUnfinished(rec) {
+  const items = [];
+  rec.priorities.forEach(p => { if (p.text.trim() && !p.done) items.push({ text:p.text, src:"Priority " + p.id }); });
+  const laneNames = { gls: rec.lanes.glsTitle || "GLS", focus: "Focus: " + (rec.focusCategory||""), home: "Home/Family" };
+  ["gls","focus","home"].forEach(k => {
+    rec.lanes[k].forEach(item => { if (item.text.trim() && !item.done) items.push({ text:item.text, src:laneNames[k] }); });
+  });
+  rec.carried.forEach(c => { if (!c.done) items.push({ text:c.text, src:c.source + " (carried)" }); });
+  return items;
+}
+
+// ---------- AUTH GATE ----------
+function renderAuth(mode, errorMsg) {
+  const app = document.getElementById('app');
+  const isSignup = mode === 'signup';
+  app.innerHTML = `
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <h2>${isSignup ? "Create your planner account" : "Welcome back"}</h2>
+        <p class="sub">${isSignup ? "One account, used on every device you open this on." : "Log in to sync your planner across devices."}</p>
+        ${errorMsg ? `<div class="auth-error">${escapeHtml(errorMsg)}</div>` : ``}
+        ${isSignup ? `<div class="auth-note">No email verification needed for personal use — just remember your password.</div>` : ``}
+        <input id="authEmail" type="email" placeholder="Email" autocomplete="username">
+        <input id="authPass" type="password" placeholder="Password (6+ characters)" autocomplete="${isSignup?'new-password':'current-password'}">
+        <button onclick="doAuth('${mode}')">${isSignup ? "Create Account" : "Log In"}</button>
+        <div class="switch">
+          ${isSignup
+            ? `Already have an account? <a href="#" onclick="renderAuth('login');return false;">Log in</a>`
+            : `Need an account? <a href="#" onclick="renderAuth('signup');return false;">Create one</a>`}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function doAuth(mode) {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPass').value;
+  if (!email || !password) { renderAuth(mode, "Enter both an email and password."); return; }
+  document.querySelector('.auth-card button').textContent = "Please wait...";
+  try {
+    const { data, error } = mode === 'signup'
+      ? await sb.auth.signUp({ email, password })
+      : await sb.auth.signInWithPassword({ email, password });
+    if (error) { renderAuth(mode, error.message); return; }
+    currentUser = data.user;
+    if (!currentUser) { renderAuth(mode, "Check your email to confirm, then log in."); return; }
+    await init();
+  } catch (e) { renderAuth(mode, "Something went wrong: " + e.message); }
+}
+
+async function signOut() { await sb.auth.signOut(); currentUser = null; renderAuth('login'); }
+
+async function startApp() {
+  const { data } = await sb.auth.getSession();
+  if (data && data.session && data.session.user) {
+    currentUser = data.session.user;
+    await init();
+  } else {
+    renderAuth('login');
+  }
+}
+
+
+async function init() {
+  const today = todayStr();
+  let meta = await getMeta();
+
+  if (!meta) {
+    state = blankRecord(today);
+    await saveRecord(state);
+    await setMeta({ lastDate: today });
+    render();
+    return;
+  }
+
+  if (meta.lastDate === today) {
+    state = await loadRecord(today);
+    if (!state) { state = blankRecord(today); await saveRecord(state); }
+    render();
+    return;
+  }
+
+  // New day since last opened — build morning review
+  const yRec = await loadRecord(meta.lastDate);
+  const draft = blankRecord(today);
+  const items = yRec ? collectUnfinished(yRec) : [];
+  if (items.length === 0) {
+    state = draft;
+    await saveRecord(state);
+    await setMeta({ lastDate: today });
+    render();
+  } else {
+    pendingReview = { items: items.map(i => ({ ...i, carry:true })), draft };
+    renderReviewModal();
+  }
+}
+
+function renderReviewModal() {
+  const app = document.getElementById('app');
+  const itemsHtml = pendingReview.items.map((it, i) => `
+    <div class="item">
+      <input type="checkbox" ${it.carry ? "checked" : ""} onchange="toggleCarry(${i})">
+      <div>
+        <span class="txt">${escapeHtml(it.text)}</span>
+        <span class="src">${escapeHtml(it.src)}</span>
+      </div>
+    </div>`).join("");
+
+  app.innerHTML = `
+    <div class="modal" style="margin-top:40px;">
+      <h2>Good morning 👋</h2>
+      <p class="sub">${pendingReview.items.length} thing${pendingReview.items.length===1?'':'s'} didn't get finished yesterday. Carry it forward, or let it drop — no guilt either way.</p>
+      <div class="modal-actions">
+        <button onclick="carryAllToggle(true)">Carry All</button>
+        <button onclick="carryAllToggle(false)">Drop All</button>
+      </div>
+      ${itemsHtml}
+      <button class="start-btn" onclick="finishReview()">Start Today →</button>
+    </div>
+  `;
+}
+function toggleCarry(i) { pendingReview.items[i].carry = !pendingReview.items[i].carry; renderReviewModal(); }
+function carryAllToggle(val) { pendingReview.items.forEach(it => it.carry = val); renderReviewModal(); }
+async function finishReview() {
+  const draft = pendingReview.draft;
+  draft.carried = pendingReview.items.filter(it => it.carry).map(it => ({ text: it.text, source: it.src, done:false }));
+  state = draft;
+  await saveRecord(state);
+  await setMeta({ lastDate: state.date });
+  pendingReview = null;
+  render();
+}
+
+function escapeHtml(s) { const d=document.createElement('div'); d.innerText = s; return d.innerHTML; }
+
+function fmtDateHeader(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  return d.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
+}
+
+async function persist() { await saveRecord(state); }
+let persistTimer = null;
+function persistDebounced() {
+  clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => { saveRecord(state); }, 400);
+}
+window.addEventListener('pagehide', () => { if (state) saveRecord(state); });
+window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state) saveRecord(state); });
+
+function render() {
+  const app = document.getElementById('app');
+  const dow = dowOf(state.date);
+  const showRecoveryBanner = inRecoveryWindow(state.date) && !state.recoveryConfirmed;
+
+  app.innerHTML = `
+    <div class="signout-row"><button onclick="signOut()">Sign out (${escapeHtml(currentUser.email)})</button></div>
+    ${showRecoveryBanner ? `
+    <div class="recovery-banner">
+      <b>This date falls in your recovery window.</b> Turn on Recovery Mode today?
+      <div class="rb-actions">
+        <button class="rb-yes" onclick="setRecovery(true)">Yes, Recovery Mode</button>
+        <button class="rb-no" onclick="setRecovery(false)">No, I'm working</button>
+      </div>
+    </div>` : ``}
+
+    <div class="top">
+      <div class="iam-row">
+        <span class="iam-label">I AM</span>
+        <input class="iam-input" type="text" placeholder="..." value="${escapeHtml(state.iam)}" oninput="state.iam=this.value; persistDebounced()" onblur="persist()">
+      </div>
+      <div class="date-block">
+        <div class="big">${fmtDateHeader(state.date)}</div>
+        <div class="recovery-line">
+          <label class="recovery-toggle">
+            <input type="checkbox" ${state.recoveryMode ? "checked":""} onchange="toggleRecoveryManual(this.checked)" style="accent-color:var(--red)">
+            RECOVERY MODE
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="rotation"><b>Today's focus:</b> ${
+      [1,2,3,4,5].map(d => `<span class="${d===dow?'hl':''}">${ROTATION_LABEL_SHORT[d]}</span>`).join(" &nbsp;|&nbsp; ")
+    } &nbsp;|&nbsp; <span class="${(dow===6||dow===0)?'hl':''}">Sat/Sun: Family</span></div>
+
+    ${state.carried.length ? `
+    <div class="card carried-card">
+      <h3>CARRIED OVER FROM YESTERDAY</h3>
+      ${state.carried.map((c,i) => `
+        <div class="carried-row">
+          <input type="checkbox" ${c.done?"checked":""} onchange="toggleCarriedDone(${i}, this.checked)">
+          <div>${escapeHtml(c.text)}<span class="tag">${escapeHtml(c.source)}</span></div>
+        </div>`).join("")}
+    </div>` : ``}
+
+    <div class="priorities-grid">
+      ${state.priorities.map((p, i) => {
+        const dim = state.recoveryMode && p.id !== 'A';
+        return `
+        <div class="pbox ${dim ? 'dim':''}">
+          <span class="letter">${p.id}</span>
+          <textarea rows="3" placeholder="${dim ? '(skip — recovery mode)' : 'priority...'}" oninput="state.priorities[${i}].text=this.value; persistDebounced()" onblur="persist()" ${dim?'disabled':''}>${escapeHtml(p.text)}</textarea>
+          <input class="conseq" type="text" placeholder="if this slips..." value="${escapeHtml(p.consequence)}" oninput="state.priorities[${i}].consequence=this.value; persistDebounced()" onblur="persist()" ${dim?'disabled':''}>
+          <div class="done-row"><label><input type="checkbox" ${p.done?"checked":""} onchange="togglePriorityDone(${i}, this.checked)"> done</label></div>
+        </div>`;
+      }).join("")}
+    </div>
+
+    <div class="card habit-card">
+      <h3>DAILY NON-NEGOTIABLES</h3>
+      <div class="habit-row"><input type="checkbox" ${state.habits.walk?"checked":""} onchange="toggleHabit('walk',this.checked)"> 5-min walk</div>
+      <div class="habit-row"><input type="checkbox" ${state.habits.water?"checked":""} onchange="toggleHabit('water',this.checked)"> 60oz water</div>
+      <div class="habit-row"><input type="checkbox" ${state.habits.protein?"checked":""} onchange="toggleHabit('protein',this.checked)"> 100g protein</div>
+      <div class="habit-row"><input type="checkbox" ${state.habits.bible?"checked":""} onchange="toggleHabit('bible',this.checked)"> Bible time</div>
+      <div class="habit-row"><input type="checkbox" ${state.habits.teeth?"checked":""} onchange="toggleHabit('teeth',this.checked)"> Brush teeth (AM/PM)</div>
+    </div>
+
+    <div class="grid2">
+      <div class="card braindump-card">
+        <h3>BRAIN DUMP</h3>
+        <textarea placeholder="anything on your mind..." oninput="state.brainDump=this.value; persistDebounced()" onblur="persist()">${escapeHtml(state.brainDump)}</textarea>
+      </div>
+      <div>
+        <div class="card feel-card">
+          <h3>HOW I FEEL</h3>
+          <div class="feel-opts">
+            ${["drained","rough","okay","good","great"].map(f => `
+              <div class="feel-opt ${state.feeling===f?'sel':''}" onclick="setFeeling('${f}')">
+                ${({drained:"😩",rough:"😕",okay:"😐",good:"🙂",great:"😄"})[f]}
+                <div class="lbl">${f}</div>
+              </div>`).join("")}
+          </div>
+        </div>
+        <div class="card energy-card">
+          <h3>ENERGY TANK</h3>
+          <div class="energy-bar">
+            ${[1,2,3,4,5].map(n => `<div class="energy-seg ${state.energy>=n?'on':''}" onclick="setEnergy(${n})"></div>`).join("")}
+          </div>
+        </div>
+        <div class="card fumble-card">
+          <h3>FUMBLE TRIGGERS</h3>
+          <input type="text" placeholder="trigger 1..." value="${escapeHtml(state.fumbles[0])}" oninput="state.fumbles[0]=this.value; persistDebounced()" onblur="persist()">
+          <input type="text" placeholder="trigger 2..." value="${escapeHtml(state.fumbles[1])}" oninput="state.fumbles[1]=this.value; persistDebounced()" onblur="persist()">
+        </div>
+      </div>
+    </div>
+
+    <div class="grid3">
+      ${laneCardHtml("gls", state.lanes.glsTitle, state.lanes.gls, false)}
+      ${laneCardHtml("focus", "Today's Focus: " + (state.recoveryMode ? "Recovery" : state.focusCategory), state.lanes.focus, false)}
+      ${laneCardHtml("home", "Home, Family & Me", state.lanes.home, false)}
+    </div>
+
+    <div class="card win-card">
+      <h3>WIN + GRATITUDE</h3>
+      <label>Today I'm proud I...</label>
+      <input type="text" value="${escapeHtml(state.winProud)}" oninput="state.winProud=this.value; persistDebounced()" onblur="persist()">
+      <label>Grateful for...</label>
+      <input type="text" value="${escapeHtml(state.winGrateful)}" oninput="state.winGrateful=this.value; persistDebounced()" onblur="persist()">
+    </div>
+
+    <div class="footer-note">DAILY PLANNER — FATHER · HUSBAND · PROVIDER</div>
+    <div class="help-note">Tip: log into this same account on any device to sync.<br>On iPhone: Share → Add to Home Screen to use it like an app.</div>
+  `;
+}
+
+function laneCardHtml(key, title, items, editableTitle) {
+  return `
+    <div class="card lane-card">
+      <h3 style="margin-bottom:8px;">${escapeHtml(title)}</h3>
+      ${items.map((it, i) => `
+        <div class="lane-row">
+          <input type="checkbox" ${it.done?"checked":""} onchange="toggleLaneDone('${key}',${i}, this.checked)">
+          <input type="text" placeholder="..." value="${escapeHtml(it.text)}" oninput="state.lanes['${key}'][${i}].text=this.value; persistDebounced()" onblur="persist()">
+        </div>`).join("")}
+    </div>`;
+}
+
+// ---- event handlers ----
+function toggleHabit(k, v) { state.habits[k] = v; persist(); }
+function setFeeling(f) { state.feeling = f; render(); persist(); }
+function setEnergy(n) { state.energy = (state.energy === n) ? n-1 : n; render(); persist(); }
+function togglePriorityDone(i, v) { state.priorities[i].done = v; persist(); }
+function toggleLaneDone(key, i, v) { state.lanes[key][i].done = v; persist(); }
+function toggleCarriedDone(i, v) { state.carried[i].done = v; persist(); }
+function toggleRecoveryManual(v) { state.recoveryMode = v; state.recoveryConfirmed = true; render(); persist(); }
+startApp();
+</script>
+</body>
+</html>

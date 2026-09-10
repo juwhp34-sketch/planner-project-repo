@@ -11,6 +11,8 @@
     --dark:#2B2B2B; --green:#3F6B56; --greenBg:#F0F5F2; --tan:#B8825F; --tanBg:#FFF9F2;
     --blue:#4A5A8A; --blueBg:#F0F1F8; --grey:#999999; --greyBg:#F7F7F5; --gold:#D9A441;
     --red:#D94F4F; --redBg:#FDF2F2; --bg:#FDFCF9;
+    --purple:#A15C8E; --orange:#C2703D;
+    --dayFg: var(--dark); --dayBg: #f7f7f5;
   }
   * { box-sizing: border-box; }
   body {
@@ -19,20 +21,20 @@
     -webkit-tap-highlight-color: transparent;
   }
   .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 40px; }
-  .top { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid var(--dark); padding-bottom:12px; margin-bottom:14px; gap:10px; flex-wrap:wrap; }
+  .top { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid var(--dayFg, var(--dark)); padding-bottom:12px; margin-bottom:14px; gap:10px; flex-wrap:wrap; }
   .iam-row { display:flex; align-items:baseline; gap:6px; flex:1; min-width:220px; }
-  .iam-label { font-size:22px; font-weight:800; white-space:nowrap; }
+  .iam-label { font-size:22px; font-weight:800; white-space:nowrap; color:var(--dayFg, var(--dark)); }
   .iam-input { border:none; border-bottom:1px dotted #999; background:transparent; font-size:15px; padding:4px 2px; flex:1; min-width:80px; font-family:inherit; }
   .iam-input:focus { outline:none; border-bottom:1px solid var(--dark); }
   .date-block { text-align:right; font-size:12px; color:#777; }
-  .date-block .big { font-size:14px; color:var(--dark); font-weight:700; }
+  .date-block .big { font-size:14px; color:var(--dayFg, var(--dark)); font-weight:700; }
   .recovery-line { margin-top:6px; }
   .recovery-toggle { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--red); cursor:pointer; }
   .rotation { font-size:11px; color:#888; border-bottom:1px dotted #ddd; padding-bottom:10px; margin-bottom:14px; }
   .rotation b { color:#555; }
   .rotation .hl { color:var(--red); font-weight:800; }
 
-  .card { border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .card { border-radius:10px; padding:14px 16px; margin-bottom:12px; position:relative; }
   .card h3 { margin:0 0 10px; font-size:13px; letter-spacing:0.5px; }
   .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
   .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
@@ -60,10 +62,12 @@
   .feel-card { background:var(--blueBg); border:2px solid var(--blue); }
   .feel-card h3 { color:var(--blue); }
   .feel-opts { display:flex; justify-content:space-between; }
-  .feel-opt { text-align:center; font-size:22px; cursor:pointer; border-radius:6px; padding:4px 2px; flex:1; }
-  .feel-opt.sel { background:var(--blue); }
-  .feel-opt .lbl { font-size:9px; color:#666; }
-  .feel-opt.sel .lbl { color:#fff; font-weight:700; }
+  .feel-opt { text-align:center; cursor:pointer; border-radius:8px; padding:4px 2px; flex:1; transition:transform .15s ease; }
+  .feel-opt:hover { transform:translateY(-2px); }
+  .feel-opt.sel { transform:scale(1.08); }
+  .mood-svg { display:block; margin:0 auto; }
+  .feel-opt .lbl { font-size:9px; color:#666; margin-top:3px; }
+  .feel-opt.sel .lbl { color:var(--dark); font-weight:700; }
 
   .energy-card { background:var(--tanBg); border:2px solid var(--tan); }
   .energy-card h3 { color:var(--tan); }
@@ -98,6 +102,129 @@
 
   .footer-note { text-align:center; font-size:10px; color:#bbb; letter-spacing:1px; margin-top:10px; }
 
+  /* View nav (Today / History) */
+  .view-nav { display:flex; gap:8px; margin-bottom:14px; }
+  .view-nav button { flex:1; padding:9px; border-radius:8px; border:1px solid #ddd; background:#fff; font-weight:700; font-size:13px; color:#888; cursor:pointer; }
+  .view-nav button.active { background:var(--dark); color:#fff; border-color:var(--dark); }
+
+  /* Monthly/daily color theme banner */
+  .month-banner { font-size:11px; font-weight:700; letter-spacing:0.4px; padding:6px 10px; border-radius:6px; margin-bottom:10px; display:inline-block; }
+
+  /* Energy-based highlighting */
+  .energy-active { outline:3px solid var(--gold); box-shadow:0 0 0 4px rgba(217,164,65,0.18); transition:all .2s ease; }
+  .energy-dim { opacity:0.4; filter:grayscale(0.5); transition:all .2s ease; }
+
+  /* Bullet legend + tag buttons */
+  .bullet-legend { font-size:10px; color:#aaa; margin-top:6px; letter-spacing:0.3px; display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+  .bullet-btn { font-size:11px; padding:3px 8px; border-radius:10px; border:1px solid #ddd; background:#fff; color:#666; cursor:pointer; font-family:inherit; }
+  .bullet-btn:hover { border-color:var(--dark); color:var(--dark); background:#f5f5f5; }
+  .bullet-btn:active { background:var(--dark); color:#fff; }
+  .bullet-hint { color:#bbb; font-size:10px; }
+  .tagrow { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+  .tagbtn { font-size:11px; padding:4px 8px; border-radius:12px; border:1px solid #ccc; background:#fff; cursor:pointer; }
+  .tagbtn.sel { background:var(--dark); color:#fff; border-color:var(--dark); }
+  .skip-btn { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; background:#f5f5f5; font-size:13px; font-weight:600; cursor:pointer; margin-top:8px; }
+
+  /* History views */
+  .hist-title { font-size:20px; margin:6px 0 14px; }
+  .hist-year h2 { font-size:16px; margin:18px 0 8px; }
+  .hist-month-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media (max-width:480px) { .hist-month-grid { grid-template-columns:repeat(2,1fr); } }
+  .hist-month-btn { border:2px solid #ccc; border-radius:10px; padding:12px; background:#fff; display:flex; flex-direction:column; gap:4px; cursor:pointer; text-align:left; }
+  .hmb-name { font-weight:700; font-size:14px; }
+  .hmb-count { font-size:11px; color:#888; }
+  .hist-breadcrumb { margin-bottom:10px; display:flex; gap:4px; flex-wrap:wrap; }
+  .hist-breadcrumb button { background:none; border:none; color:#888; font-size:12px; cursor:pointer; padding:4px 6px; }
+  .hist-week-card { border:1px solid #eee; border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+  .hist-week-head { display:flex; justify-content:space-between; align-items:center; }
+  .hist-week-link { background:none; border:none; font-size:14px; font-weight:700; cursor:pointer; padding:0; color:var(--dark); }
+  .hist-week-count { font-size:11px; color:#999; }
+  .hist-day-row { border-left:4px solid #ccc; padding:8px 12px; margin-bottom:6px; background:#fafafa; border-radius:0 8px 8px 0; cursor:pointer; }
+  .hdr-date { font-weight:700; font-size:13px; }
+  .hdr-stats { font-size:11px; color:#888; }
+  .ro-row { font-size:13px; padding:3px 0; }
+  .ro-text { font-size:13px; line-height:1.5; white-space:pre-wrap; }
+  .export-btn { display:block; width:100%; padding:10px; margin-bottom:14px; border:none; border-radius:8px; background:var(--green); color:#fff; font-weight:700; cursor:pointer; }
+  .empty-hint { color:#999; font-style:italic; font-size:13px; }
+
+  /* Decorative: quote card, stickers, washi tape */
+  .quote-card {
+    background:var(--surface,#fff); border:1.5px dashed; border-radius:10px; padding:12px 18px 12px 30px;
+    margin-bottom:14px; font-size:13px; font-style:italic; color:#555; position:relative; line-height:1.5;
+  }
+  .quote-mark { position:absolute; left:8px; top:2px; font-size:28px; font-style:normal; line-height:1; opacity:0.6; }
+  .quote-sticker { float:right; font-size:16px; font-style:normal; margin-left:8px; }
+  .sticker { font-size:13px; margin-left:4px; }
+  .tape {
+    position:absolute; top:-10px; left:24px; width:70px; height:22px; opacity:0.85; transform:rotate(-4deg);
+    background:repeating-linear-gradient(45deg, rgba(63,107,86,0.55), rgba(63,107,86,0.55) 5px, rgba(255,255,255,0.35) 5px, rgba(255,255,255,0.35) 10px);
+    border-radius:2px; box-shadow:0 1px 2px rgba(0,0,0,0.1);
+  }
+  .tape-gold {
+    background:repeating-linear-gradient(45deg, rgba(217,164,65,0.6), rgba(217,164,65,0.6) 5px, rgba(255,255,255,0.35) 5px, rgba(255,255,255,0.35) 10px);
+    left:auto; right:24px; transform:rotate(4deg);
+  }
+
+  /* AI goal breakdown */
+  .bd-spinner {
+    width:36px; height:36px; margin:0 auto; border-radius:50%;
+    border:4px solid #e3e0d8; border-top-color:var(--green); animation: bd-spin 0.8s linear infinite;
+  }
+  @keyframes bd-spin { to { transform: rotate(360deg); } }
+  .big-goal-card { border:2px dashed var(--green); background:var(--greenBg); }
+  .big-goal-card h3 { color:var(--green); }
+  .big-goal-row { display:flex; gap:8px; margin-top:8px; }
+  .big-goal-row input { flex:1; border:1px solid #ccd9d2; border-radius:8px; padding:9px 10px; font-family:inherit; font-size:13px; background:#fff; }
+  .big-goal-row button { background:var(--green); color:#fff; border:none; border-radius:8px; padding:9px 14px; font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap; }
+  .breakdown-btn {
+    background:none; border:1px solid #ccc; color:#888; border-radius:6px; font-size:10px; padding:3px 7px;
+    cursor:pointer; white-space:nowrap; flex-shrink:0;
+  }
+  .breakdown-btn:hover { border-color:var(--green); color:var(--green); }
+
+  /* Completion celebration */
+  .confetti-piece {
+    position:fixed; z-index:9999; pointer-events:none; font-size:18px; left:0; top:0;
+    animation: confetti-burst 750ms ease-out forwards;
+  }
+  @keyframes confetti-burst {
+    0% { transform: translate(-50%,-50%) rotate(0deg) scale(1); opacity:1; }
+    100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)) scale(0.4); opacity:0; }
+  }
+
+  /* Plan view (weekly / quarter) */
+  .plan-subnav { display:flex; gap:8px; margin-bottom:14px; }
+  .plan-subnav button { flex:1; padding:8px; border-radius:8px; border:1px solid #ddd; background:#fff; font-weight:600; font-size:12px; color:#888; cursor:pointer; }
+  .plan-subnav button.active { background:var(--dark); color:#fff; border-color:var(--dark); }
+  .plan-move-strip { background:var(--dark); color:#fff; border-radius:8px; padding:12px 14px; font-size:13px; margin-bottom:12px; }
+  .plan-move-strip b { display:block; font-size:11px; letter-spacing:0.5px; margin-bottom:4px; color:#ddd; }
+  .plan-week-nav { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .plan-week-nav button { background:#fff; border:1px solid #ddd; border-radius:8px; width:32px; height:32px; cursor:pointer; }
+  .plan-week-nav .lbl { font-weight:700; font-size:14px; flex:1; }
+  .plan-cat-row { display:flex; gap:10px; padding:9px 0; border-bottom:1px dotted #e3e0d8; align-items:baseline; }
+  .plan-cat-row:last-child { border-bottom:none; }
+  .plan-cat-name { width:120px; flex-shrink:0; font-weight:700; font-size:13px; }
+  .plan-cat-task { flex:1; font-size:13px; }
+  .plan-rotation { display:flex; gap:6px; }
+  .plan-rotation .rday { flex:1; text-align:center; border-radius:6px; padding:6px 2px; font-size:10px; border:2px solid var(--green); background:var(--greenBg); }
+  .plan-rotation .rday.hl { background:var(--green); color:#fff; }
+  .plan-rotation .rday.dim { border-color:#ccc; background:#f2f2f2; color:#999; }
+  .plan-rotation .rday b { display:block; font-size:11px; }
+  .quarter-year-goal { background:var(--dark); border-radius:8px; padding:12px 14px; margin-bottom:12px; }
+  .quarter-year-goal label { color:#ddd; font-size:11px; font-weight:700; letter-spacing:0.4px; display:block; margin-bottom:6px; }
+  .quarter-year-goal input { width:100%; border:none; border-bottom:1px solid #666; background:transparent; color:#fff; font-size:14px; padding:4px 0; font-family:inherit; }
+  .quarter-year-goal input:focus { outline:none; border-bottom-color:#fff; }
+  .quarter-cat-card { border-radius:10px; padding:12px 14px; margin-bottom:10px; border:2px solid #ddd; }
+  .quarter-cat-card h4 { margin:0 0 6px; font-size:14px; }
+  .quarter-cat-goal { font-size:12px; color:#666; font-style:italic; margin-bottom:8px; }
+  .quarter-months { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  @media (max-width:560px) { .quarter-months { grid-template-columns:1fr; } }
+  .quarter-month-box { background:var(--greyBg); border-radius:6px; padding:8px; }
+  .quarter-month-box .mlabel { font-size:10px; font-weight:700; color:#999; margin-bottom:3px; }
+  .quarter-month-box .mtext { font-size:12px; }
+  .plan-reflect textarea { width:100%; min-height:60px; border:none; background:transparent; font-family:inherit; font-size:13px; resize:vertical; }
+  .plan-reflect textarea:focus { outline:none; }
+
   /* Modal */
   .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:flex-end; justify-content:center; z-index:50; }
   @media (min-width:600px){ .overlay{ align-items:center; } }
@@ -128,6 +255,12 @@
 const ROTATION = { 1:"Book Keeping", 2:"Administration", 3:"Student Ministry", 4:"Personal", 5:"Lopez Home", 6:"Family", 0:"Family" };
 const ROTATION_LABEL_SHORT = { 1:"Mon: Book Keeping", 2:"Tue: Admin", 3:"Wed: Student Ministry", 4:"Thu: Personal", 5:"Fri: Lopez Home", 6:"Sat/Sun: Family", 0:"Sat/Sun: Family" };
 const RECOVERY_START = "2026-07-29", RECOVERY_END = "2026-08-15";
+
+// ---------- AI goal breakdown (calls a Supabase Edge Function you deploy — see README) ----------
+// Fill these in once your Edge Function is deployed. Until then, "Break it down" will show a
+// clear setup-needed message instead of failing silently.
+const BREAKDOWN_FUNCTION_URL = "https://pecwdaupaaucxtngbjxz.supabase.co/functions/v1/breakdown-goal";
+const BREAKDOWN_SHARED_SECRET = "6474673edde8f557fe13efaa9ad04647969fd5a9d788b129";
 
 // Pre-planned content from the Weekly Reviews (Jul 13 – Aug 2), mapped to each specific date.
 // This only fills a date's record the FIRST time it's ever opened — after that, your edits are yours.
@@ -350,8 +483,11 @@ function blankRecord(dateStr) {
       { id:"B", text:"", consequence:"", done:false },
       { id:"C", text:"", consequence:"", done:false }
     ],
-    habits: { walk:false, water:false, protein:false, bible:false, teeth:false },
+    habits: { walk:false, water:false, protein:false, bible:false, teeth:false, guitar:false },
     brainDump: "",
+    brainDumpReviewed: false,
+    dumpTasks: [],
+    stepTasks: [],
     feeling: "",
     energy: 0,
     fumbles: ["", ""],
@@ -386,10 +522,18 @@ let pendingReview = null; // {yesterday, items:[{text,src,carry}], todayDraft}
 
 // This app runs fully standalone on your device — data is saved with localStorage,
 // tied to this exact file/page in Safari, not to any Claude account or server.
+function ensureRecordDefaults(rec) {
+  if (!rec) return rec;
+  rec.habits = Object.assign({ walk:false, water:false, protein:false, bible:false, teeth:false, guitar:false }, rec.habits || {});
+  if (!Array.isArray(rec.dumpTasks)) rec.dumpTasks = [];
+  if (!Array.isArray(rec.stepTasks)) rec.stepTasks = [];
+  if (typeof rec.brainDumpReviewed !== 'boolean') rec.brainDumpReviewed = false;
+  return rec;
+}
 async function loadRecord(dateStr) {
   try {
     const v = localStorage.getItem('planner:' + dateStr);
-    return v ? JSON.parse(v) : null;
+    return v ? ensureRecordDefaults(JSON.parse(v)) : null;
   } catch (e) { return null; }
 }
 async function saveRecord(rec) {
@@ -405,6 +549,640 @@ async function getMeta() {
 async function setMeta(meta) {
   try { localStorage.setItem('planner:meta', JSON.stringify(meta)); }
   catch (e) { console.error('meta save failed', e); }
+}
+
+// ---------- Monthly theme / daily color variation ----------
+// One named palette per month of 2026; a small hue offset per weekday (Sun..Sat)
+// keeps every day looking a little different without a jarring full-page recolor.
+const MONTH_THEMES = {
+  1:{ name:"Fresh Start Blue", hue:212 }, 2:{ name:"Quiet Plum", hue:282 },
+  3:{ name:"New Growth Green", hue:132 }, 4:{ name:"Spring Bloom Pink", hue:338 },
+  5:{ name:"Sunlit Gold", hue:46 }, 6:{ name:"Open Sky Teal", hue:188 },
+  7:{ name:"Midsummer Terracotta", hue:20 }, 8:{ name:"Steady Amber (Recovery)", hue:34 },
+  9:{ name:"Harvest Orange", hue:26 }, 10:{ name:"Rust & Rest", hue:14 },
+  11:{ name:"Warm Cocoa", hue:28 }, 12:{ name:"Evergreen Berry", hue:352 }
+};
+const DOW_HUE_OFFSET = [-10,-4,0,4,8,14,-16]; // Sun..Sat
+function dayAccent(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  const theme = MONTH_THEMES[d.getMonth()+1];
+  const hue = (theme.hue + DOW_HUE_OFFSET[d.getDay()] + 360) % 360;
+  return { name: theme.name, fg: `hsl(${hue} 45% 36%)`, bg: `hsl(${hue} 55% 95%)` };
+}
+function monthNameFromNum(m) { return new Date(2000, m-1, 1).toLocaleDateString('en-US', { month:'long' }); }
+function fmtShort(dateStr) { const d = new Date(dateStr + "T12:00:00"); return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
+
+// ---------- Daily inspiration quote + sticker (decorative, stable per day) ----------
+const INSPO_QUOTES = [
+  "Progress, not perfection — small steps still move the plan forward.",
+  "You don't have to feel ready to be faithful today.",
+  "Rest is part of the plan, not a failure of it.",
+  "One honest priority finished beats three perfect ones abandoned.",
+  "Carry what matters forward. Let the rest go without guilt.",
+  "Today only asks for today's effort — nothing more.",
+  "A slow day is still a day you showed up.",
+  "Small, steady, faithful — that's how seasons like this get through.",
+  "You are allowed to do this imperfectly and still be doing it well.",
+  "The people who need you don't need you perfect — they need you present.",
+  "Every checked box is proof, not just progress.",
+  "Healing and hustle can't both be priority A — and that's okay.",
+  "What you're building is bigger than any one hard day.",
+  "You're not behind. You're exactly in the middle of your own plan.",
+  "Grace for today, a plan for tomorrow.",
+  "Let today be simple. Simple still counts.",
+  "The work will wait. Your family, your health, your rest — go first.",
+  "Consistency beats intensity, especially this season.",
+  "You've made it through every hard day so far. That's a real track record.",
+  "Write it down, let it go, and pick it back up tomorrow if you need to."
+];
+const INSPO_STICKERS = ['✨','🌿','🌟','💛','🌤️','🕊️','🌱','☀️','💫','🍃'];
+function quoteForDate(dateStr) {
+  let hash = 0;
+  for (let i=0;i<dateStr.length;i++) hash = (hash*31 + dateStr.charCodeAt(i)) >>> 0;
+  return INSPO_QUOTES[hash % INSPO_QUOTES.length];
+}
+function stickerForDate(dateStr) {
+  let hash = 0;
+  for (let i=0;i<dateStr.length;i++) hash = (hash*17 + dateStr.charCodeAt(i)) >>> 0;
+  return INSPO_STICKERS[hash % INSPO_STICKERS.length];
+}
+
+// ---------- Modern flat mood-face icons (replaces emoji in HOW I FEEL) ----------
+const MOOD_COLORS = { drained:'var(--red)', rough:'var(--tan)', okay:'var(--grey)', good:'var(--green)', great:'var(--gold)' };
+function moodFaceParts(mood, c) {
+  switch (mood) {
+    case 'drained': return {
+      eyes: `<line x1="13" y1="15" x2="17" y2="15" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/><line x1="23" y1="15" x2="27" y2="15" stroke="${c}" stroke-width="2.2" stroke-linecap="round"/>`,
+      mouth: "M13,27 Q20,21 27,27"
+    };
+    case 'rough': return {
+      eyes: `<circle cx="14" cy="15" r="1.7" fill="${c}"/><circle cx="26" cy="15" r="1.7" fill="${c}"/>`,
+      mouth: "M13,26 Q20,23 27,26"
+    };
+    case 'good': return {
+      eyes: `<circle cx="14" cy="15" r="1.7" fill="${c}"/><circle cx="26" cy="15" r="1.7" fill="${c}"/>`,
+      mouth: "M13,24 Q20,28 27,24"
+    };
+    case 'great': return {
+      eyes: `<path d="M11,15 Q14,11 17,15" stroke="${c}" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M23,15 Q26,11 29,15" stroke="${c}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`,
+      mouth: "M11,21 Q20,32 29,21"
+    };
+    default: return {
+      eyes: `<circle cx="14" cy="15" r="1.7" fill="${c}"/><circle cx="26" cy="15" r="1.7" fill="${c}"/>`,
+      mouth: "M13,25 L27,25"
+    };
+  }
+}
+function moodIconSvg(mood, selected) {
+  const c = MOOD_COLORS[mood] || 'var(--dark)';
+  const lineColor = selected ? '#ffffff' : c;
+  const parts = moodFaceParts(mood, lineColor);
+  return `<svg class="mood-svg" width="30" height="30" viewBox="0 0 40 40">
+    <circle cx="20" cy="20" r="17" fill="${selected ? c : 'transparent'}" stroke="${c}" stroke-width="2"/>
+    ${parts.eyes}
+    <path d="${parts.mouth}" stroke="${lineColor}" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>`;
+}
+
+// ---------- History browsing (Year > Month > Week > Day) ----------
+function getAllRecordDates() {
+  const dates = [];
+  for (let i=0;i<localStorage.length;i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('planner:') && k !== 'planner:meta') dates.push(k.slice('planner:'.length));
+  }
+  return dates.sort();
+}
+function startOfWeekStr(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() - d.getDay());
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
+}
+function addDaysStr(dateStr, n) {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,'0') + "-" + String(d.getDate()).padStart(2,'0');
+}
+function buildHistoryIndex() {
+  const idx = {};
+  getAllRecordDates().forEach(ds => {
+    const d = new Date(ds + "T12:00:00");
+    const y = d.getFullYear(), m = d.getMonth()+1;
+    const wk = startOfWeekStr(ds);
+    idx[y] = idx[y] || {};
+    idx[y][m] = idx[y][m] || {};
+    idx[y][m][wk] = idx[y][m][wk] || [];
+    idx[y][m][wk].push(ds);
+  });
+  return idx;
+}
+
+let currentView = 'today';
+function navPillsHtml(active) {
+  return `<div class="view-nav">
+    <button class="${active==='today'?'active':''}" onclick="showToday()">Today</button>
+    <button class="${active==='plan'?'active':''}" onclick="showPlan()">Plan</button>
+    <button class="${active==='history'?'active':''}" onclick="showHistory()">History</button>
+  </div>`;
+}
+function showToday() { currentView = 'today'; render(); }
+function showHistory() { currentView = 'history'; renderHistoryRoot(); }
+function showPlan() { currentView = 'plan'; renderPlanRoot(); }
+
+function renderHistoryRoot() {
+  const app = document.getElementById('app');
+  const idx = buildHistoryIndex();
+  const years = Object.keys(idx).sort();
+  const body = years.length === 0
+    ? `<p class="empty-hint">No saved days yet — once you use the planner for a day or two, they'll show up here by week and month.</p>`
+    : years.map(y => {
+        const months = Object.keys(idx[y]).sort((a,b)=>a-b);
+        return `<div class="hist-year"><h2>${y}</h2><div class="hist-month-grid">
+          ${months.map(m => {
+            const count = Object.values(idx[y][m]).reduce((a,arr)=>a+arr.length,0);
+            const accent = dayAccent(y + "-" + String(m).padStart(2,'0') + "-15");
+            return `<button class="hist-month-btn" style="border-color:${accent.fg}" onclick="openHistoryMonth(${y},${m})">
+              <span class="hmb-name">${monthNameFromNum(m)}</span>
+              <span class="hmb-count">${count} day${count===1?'':'s'}</span>
+            </button>`;
+          }).join('')}
+        </div></div>`;
+      }).join('');
+  app.innerHTML = `${navPillsHtml('history')}<h1 class="hist-title">History</h1>${body}`;
+}
+
+function openHistoryMonth(y,m) { renderHistoryMonth(y,m); }
+function renderHistoryMonth(y,m) {
+  const app = document.getElementById('app');
+  const idx = buildHistoryIndex();
+  const weeks = (idx[y] && idx[y][m]) ? idx[y][m] : {};
+  const weekStarts = Object.keys(weeks).sort();
+  const accent = dayAccent(y + "-" + String(m).padStart(2,'0') + "-15");
+  const body = weekStarts.length === 0 ? `<p class="empty-hint">No days recorded yet.</p>` : weekStarts.map(ws => {
+    const dates = weeks[ws].slice().sort();
+    const wEnd = addDaysStr(ws,6);
+    return `<div class="hist-week-card">
+      <div class="hist-week-head">
+        <button class="hist-week-link" onclick="openHistoryWeek(${y},${m},'${ws}')">${fmtShort(ws)} – ${fmtShort(wEnd)}</button>
+        <span class="hist-week-count">${dates.length} day${dates.length===1?'':'s'}</span>
+      </div>
+    </div>`;
+  }).join('');
+  app.innerHTML = `${navPillsHtml('history')}
+    <div class="hist-breadcrumb"><button onclick="showHistory()">‹ All Years</button></div>
+    <h1 class="hist-title" style="color:${accent.fg}">${monthNameFromNum(m)} ${y}</h1>
+    ${body}`;
+}
+
+function openHistoryWeek(y,m,ws) { renderHistoryWeek(y,m,ws); }
+async function renderHistoryWeek(y,m,ws) {
+  const app = document.getElementById('app');
+  const idx = buildHistoryIndex();
+  const dates = ((idx[y] && idx[y][m] && idx[y][m][ws]) ? idx[y][m][ws] : []).slice().sort();
+  const rows = await Promise.all(dates.map(async ds => {
+    const rec = await loadRecord(ds);
+    const doneCount = rec ? rec.priorities.filter(p=>p.done).length : 0;
+    const totalCount = rec ? rec.priorities.filter(p=>p.text.trim()).length : 0;
+    const accent = dayAccent(ds);
+    return `<div class="hist-day-row" style="border-left-color:${accent.fg}" onclick="openHistoryDay('${ds}')">
+      <div class="hdr-date">${fmtShort(ds)}</div>
+      <div class="hdr-stats">${totalCount?`${doneCount}/${totalCount} priorities done`:'no priorities set'}${rec && rec.feeling ? ' · '+rec.feeling : ''}</div>
+    </div>`;
+  }));
+  app.innerHTML = `${navPillsHtml('history')}
+    <div class="hist-breadcrumb"><button onclick="showHistory()">‹ All Years</button><button onclick="openHistoryMonth(${y},${m})">‹ ${monthNameFromNum(m)}</button></div>
+    <h1 class="hist-title">Week of ${fmtShort(ws)}</h1>
+    <button class="export-btn" onclick="exportWeek('${ws}')">Export this week</button>
+    ${rows.join('')}`;
+}
+
+function openHistoryDay(ds) { renderHistoryDay(ds); }
+async function renderHistoryDay(ds) {
+  const app = document.getElementById('app');
+  const rec = await loadRecord(ds);
+  if (!rec) { app.innerHTML = navPillsHtml('history') + '<p class="empty-hint">No record found.</p>'; return; }
+  const accent = dayAccent(ds);
+  const d = new Date(ds + "T12:00:00");
+  app.innerHTML = `${navPillsHtml('history')}
+    <div class="hist-breadcrumb"><button onclick="showHistory()">‹ All Years</button><button onclick="openHistoryWeek(${d.getFullYear()},${d.getMonth()+1},'${startOfWeekStr(ds)}')">‹ Back to week</button></div>
+    <h1 class="hist-title" style="color:${accent.fg}">${fmtDateHeader(ds)}</h1>
+    ${renderReadOnlyDay(rec)}`;
+}
+
+function habitLabel(k) {
+  return ({ walk:'5-min walk', water:'60oz water', protein:'100g protein', bible:'Bible time', teeth:'Brush teeth', guitar:'Guitar practice 10 min' })[k] || k;
+}
+function renderReadOnlyDay(rec) {
+  const setP = rec.priorities.filter(p=>p.text.trim());
+  return `
+    <div class="card"><h3>PRIORITIES</h3>
+      ${setP.length ? setP.map(p=>`<div class="ro-row">${p.done?'✅':'⬜️'} ${escapeHtml(p.text)}</div>`).join('') : '<p class="empty-hint">None set.</p>'}
+    </div>
+    <div class="card"><h3>HABITS</h3>
+      ${Object.entries(rec.habits).map(([k,v])=>`<div class="ro-row">${v?'✅':'⬜️'} ${habitLabel(k)}</div>`).join('')}
+    </div>
+    ${rec.stepTasks && rec.stepTasks.length ? `<div class="card"><h3>BROKEN-DOWN STEPS</h3>${rec.stepTasks.map(t=>`<div class="ro-row">${t.done?'✅':'⬜️'} ${escapeHtml(t.text)}</div>`).join('')}</div>` : ''}
+    <div class="grid3">
+      ${['gls','focus','home'].map(k=>{
+        const items = rec.lanes[k].filter(i=>i.text.trim());
+        return `<div class="card"><h3>${(k==='gls'?rec.lanes.glsTitle:k).toUpperCase()}</h3>${items.length? items.map(i=>`<div class="ro-row">${i.done?'✅':'⬜️'} ${escapeHtml(i.text)}</div>`).join('') : '<p class="empty-hint">—</p>'}</div>`;
+      }).join('')}
+    </div>
+    ${rec.brainDump && rec.brainDump.trim() ? `<div class="card"><h3>BRAIN DUMP</h3><p class="ro-text">${escapeHtml(rec.brainDump)}</p></div>` : ''}
+    <div class="card"><h3>FEELING &amp; ENERGY</h3><p class="ro-text">Feeling: ${rec.feeling || '—'} · Energy: ${rec.energy||0}/5</p></div>
+    ${(rec.winProud || rec.winGrateful) ? `<div class="card"><h3>WIN + GRATITUDE</h3><p class="ro-text">Proud: ${escapeHtml(rec.winProud||'—')}<br>Grateful: ${escapeHtml(rec.winGrateful||'—')}</p></div>` : ''}
+  `;
+}
+
+async function exportWeek(ws) {
+  const we = addDaysStr(ws,6);
+  const dates = []; for (let i=0;i<7;i++) dates.push(addDaysStr(ws,i));
+  const recs = await Promise.all(dates.map(d=>loadRecord(d)));
+  const sections = dates.map((d,i)=> recs[i] ? `<h2>${fmtDateHeader(d)}</h2>${renderReadOnlyDay(recs[i])}` : '').join('<hr>');
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Weekly Review ${fmtShort(ws)}-${fmtShort(we)}</title>
+  <style>body{font-family:Georgia,serif;max-width:700px;margin:40px auto;color:#2b2924;padding:0 16px;} h1{border-bottom:3px solid #2b2924;padding-bottom:8px;} h2{color:#a9714f;margin-top:30px;} .ro-row{padding:3px 0;} .empty-hint{color:#999;font-style:italic;} hr{margin:30px 0;border:none;border-top:1px dashed #ccc;} .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;} .card{margin-bottom:14px;}</style>
+  </head><body><h1>Weekly Review — ${fmtShort(ws)} to ${fmtShort(we)}</h1>${sections}</body></html>`;
+  const blob = new Blob([html], { type:'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `weekly-review-${ws}-to-${we}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---------- Weekly Plan & Quarter Plan (from the Weekly Review / Quarter-Month Plan docs) ----------
+const WEEKLY_PLANS = {
+  "2026-07-13": {
+    end: "2026-07-19",
+    shouldMove: "Sermon prep done before Sunday (7/19). Admin, Student Ministry & Home rotation tasks progressed. Daily ACH emails on track.",
+    hl: 'TUE', rotationDim: false,
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", task:"Daily ACH emails (50/day), Mon–Fri." },
+      { name:"Book Keeping", color:"var(--blue)", task:"No action this week — full Book Keeping push scheduled for Mon 7/20." },
+      { name:"Administration", color:"var(--tan)", task:"AC unit follow-up call. Set up Costco water delivery (Thu). [Tue focus]" },
+      { name:"Student Ministry", color:"var(--purple)", task:"Print July/Aug/Sept lessons. Clean & organize room. [Wed focus]" },
+      { name:"Personal", color:"var(--orange)", task:"Sermon prep for 7/19 message — priority this week. [Thu focus]" },
+      { name:"Lopez Home", color:"var(--green)", task:"Set up Joelle's bed & bed swing. Organize storage rack. [Fri focus]" }
+    ],
+    recoveryLabel: "NOT A RECOVERY WEEK —",
+    recoveryText: "business as usual. Sermon prep is the one non-negotiable this week since it's due before Sunday service.",
+    carryOver: ["Google business phone number (Admin)", "Learn PEX card system (Book Keeping)"],
+    pushUp: ["Volunteer training day — planned for August", "Move Whitney's dresser — push to post-recovery"]
+  },
+  "2026-07-20": {
+    end: "2026-07-26",
+    shouldMove: "Close Book Keeping backlog + move the $2k before Jul 25 deadline — this is the last full week before surgery.",
+    hl: 'MON', rotationDim: false,
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", task:"Move $2k unapplied funds (due Jul 25 — do Monday). Continue daily ACH emails (50/day)." },
+      { name:"Book Keeping", color:"var(--blue)", task:"Complete Hub Reports Jan–Jun. Start learning Aplos. Reimburse Whitney. Submit reports. [Mon — heavy day]" },
+      { name:"Administration", color:"var(--tan)", task:"Get church Google phone number. Finalize phone plan. [Tue focus]" },
+      { name:"Student Ministry", color:"var(--purple)", task:"Plan August meetup. [Wed focus]" },
+      { name:"Personal", color:"var(--orange)", task:"Refill ADHD meds. Keep up with school lessons. [Thu focus]" },
+      { name:"Lopez Home", color:"var(--green)", task:"Clean bathroom/fridge. Start clearing apartment for remodel. [Fri focus]" }
+    ],
+    recoveryLabel: "NOT A RECOVERY WEEK YET —",
+    recoveryText: "last full week before surgery (Jul 29). Staff meeting Sunday 5–7:30pm this week, so Sunday evening is shorter than usual.",
+    carryOver: ["Anything unfinished from 7/13–7/19 week"],
+    pushUp: ["Move Whitney's dresser — push to post-recovery", "Volunteer training day — August"]
+  },
+  "2026-07-27": {
+    end: "2026-08-02",
+    tag: "RECOVERY MODE WEEK — SURGERY ON WEDNESDAY, JULY 29",
+    shouldMove: "Get through surgery safely and rest. Nothing else is required this week.",
+    hl: null, rotationDim: true,
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", task:"GLS only if/when cleared by your doctor — do not assume you'll work this week." },
+      { name:"Book Keeping", color:"var(--blue)", task:"Paused — recovery mode." },
+      { name:"Administration", color:"var(--tan)", task:"Paused — recovery mode." },
+      { name:"Student Ministry", color:"var(--purple)", task:"Paused — recovery mode." },
+      { name:"Personal", color:"var(--orange)", task:"Surgery Jul 29. Rest, follow post-op instructions, take medications as prescribed." },
+      { name:"Lopez Home", color:"var(--green)", task:"Only if Whitney/family need something specific — otherwise paused." }
+    ],
+    recoveryLabel: "THIS IS A RECOVERY WEEK —",
+    recoveryText: "only GLS (if cleared) and Personal/health tasks count. Everything else auto-carries to next week without guilt — that's the plan working, not you failing.",
+    carryOver: ["Everything from Book Keeping, Admin, Student Ministry, Lopez Home not finished before surgery — all of it waits."],
+    pushUp: ["Resume rotation once cleared by your doctor — target early-to-mid August depending on recovery."]
+  }
+};
+const WEEKLY_PLAN_KEYS = Object.keys(WEEKLY_PLANS).sort();
+const ROTATION_DAYS = [
+  { d:'MON', cat:'Book Keeping' }, { d:'TUE', cat:'Admin' }, { d:'WED', cat:'Student Min.' },
+  { d:'THU', cat:'Personal' }, { d:'FRI', cat:'Lopez Home' }, { d:'SAT/SUN', cat:'Family' }
+];
+
+const QUARTER_PLAN = {
+  label: "Q3 2026 (JUL – SEP)",
+  recoveryBanner: "BARIATRIC SURGERY — JULY 29 (3–6 WK RECOVERY): July/August milestones below are intentionally light on Personal & Home. Recovering well is the milestone those months — everything else flexes around it.",
+  categories: [
+    { name:"GLS (Work)", color:"var(--dark)", goal:"ACH transition fully completed; all SOPs & daily reporting caught up and consistent.",
+      jul:"Move $2k unapplied out before Jul 25. Begin daily ACH emails (50/day).", aug:"Continue ACH emails. Catch up daily cash log + reports.", sep:"ACH transition complete for all applicable customers. Finalize SOPs." },
+    { name:"Book Keeping", color:"var(--blue)", goal:"Backlog closed: Hub Reports (Jan–Jun) submitted; all SOPs written & usable by someone else.",
+      jul:"Complete Hub Reports Jan–Jun. Start learning Aplos.", aug:"Learn PEX card system. Reimburse Whitney. Organize invoices/statements into binder.", sep:"Submit reports. Build Sep–Dec counting schedule. Finalize SOPs." },
+    { name:"Administration", color:"var(--tan)", goal:"Recurring systems running (cleaning, supplies, phone/comms) without depending on memory.",
+      jul:"AC follow-up. Organize kitchen + cleaning supply tracking system. Set up water delivery.", aug:"Create cleaning schedule (Juan/Whitney/Ikaika/Josh). Get church Google phone number.", sep:"Systems running independently. Phone plan finalized." },
+    { name:"Student Ministry", color:"var(--purple)", goal:"Sep–Dec fully staffed (volunteer schedule + trained) and classroom basics operational before fall.",
+      jul:"Print lessons Jul/Aug. Clean & organize room. Plan July meetup.", aug:"Build Sep–Dec volunteer schedule. Become a CORI. Plan August meetup.", sep:"Volunteer training day. Check-in/out system live. September meetup." },
+    { name:"Personal", color:"var(--orange)", goal:"Recover well from surgery, finish school term, stabilize meds/routine system.",
+      jul:"Surgery Jul 29 + begin recovery. Sermon prep (Jul 19). School lessons continue.", aug:"Recovery continues. Resume routines as cleared. Refill ADHD meds.", sep:"Finish school (ends Sep 3). Stable daily medicine system in place." },
+    { name:"Lopez Home", color:"var(--green)", goal:"Family command center + daughter's visual routine set up; home organized at a recovery-safe pace.",
+      jul:"Set up Joelle's bed/swing. Organize storage rack. Clean bathroom/fridge (delegate if recovering).", aug:"Family command center + daughter's visual chart. Organize kitchen cabinet.", sep:"Clear apartment for remodel. Donate clothes. Home fully organized." }
+  ]
+};
+
+function loadWeekNotes(ws) {
+  try { const v = localStorage.getItem('planner:weeknotes:' + ws); return v ? JSON.parse(v) : { bestDay:'', hardestDay:'', oneWin:'' }; }
+  catch (e) { return { bestDay:'', hardestDay:'', oneWin:'' }; }
+}
+function saveWeekNotes(ws, notes) { localStorage.setItem('planner:weeknotes:' + ws, JSON.stringify(notes)); }
+function loadQuarterNotes() {
+  try { const v = localStorage.getItem('planner:quarternotes:Q3-2026'); return v ? JSON.parse(v) : { yearGoal:'', carryToQ4:'', biggestWin:'' }; }
+  catch (e) { return { yearGoal:'', carryToQ4:'', biggestWin:'' }; }
+}
+function saveQuarterNotes(n) { localStorage.setItem('planner:quarternotes:Q3-2026', JSON.stringify(n)); }
+
+let planSubView = 'week';
+let planWeekIndex = (() => {
+  const today = todayStr();
+  const idx = WEEKLY_PLAN_KEYS.findIndex(k => today >= k && today <= WEEKLY_PLANS[k].end);
+  return idx >= 0 ? idx : 0;
+})();
+
+function planSubNavHtml() {
+  return `<div class="plan-subnav">
+    <button class="${planSubView==='week'?'active':''}" onclick="setPlanSubView('week')">This Week</button>
+    <button class="${planSubView==='quarter'?'active':''}" onclick="setPlanSubView('quarter')">Quarter</button>
+  </div>`;
+}
+function setPlanSubView(v) { planSubView = v; renderPlanRoot(); }
+function renderPlanRoot() {
+  if (planSubView === 'quarter') renderPlanQuarter(); else renderPlanWeek();
+}
+
+function planWeekPrev() { if (planWeekIndex > 0) { planWeekIndex--; renderPlanWeek(); } }
+function planWeekNext() { if (planWeekIndex < WEEKLY_PLAN_KEYS.length - 1) { planWeekIndex++; renderPlanWeek(); } }
+
+function renderPlanWeek() {
+  const app = document.getElementById('app');
+  const ws = WEEKLY_PLAN_KEYS[planWeekIndex];
+  const plan = WEEKLY_PLANS[ws];
+  const notes = loadWeekNotes(ws);
+
+  const rotationHtml = `<div class="plan-rotation">${ROTATION_DAYS.map(r => {
+    const isHl = plan.hl === r.d.split('/')[0];
+    return `<div class="rday ${isHl?'hl':''} ${plan.rotationDim?'dim':''}"><b>${r.d}</b>${r.cat}</div>`;
+  }).join('')}</div>`;
+
+  app.innerHTML = `${navPillsHtml('plan')}${planSubNavHtml()}
+    <div class="plan-week-nav">
+      <button onclick="planWeekPrev()" ${planWeekIndex===0?'disabled':''}>‹</button>
+      <div class="lbl">Week of ${fmtShort(ws)} – ${fmtShort(plan.end)}</div>
+      <button onclick="planWeekNext()" ${planWeekIndex===WEEKLY_PLAN_KEYS.length-1?'disabled':''}>›</button>
+    </div>
+    ${plan.tag ? `<div class="recovery-banner" style="margin-bottom:12px;">${escapeHtml(plan.tag)}</div>` : ''}
+    <div class="plan-move-strip"><b>THIS WEEK SHOULD MOVE</b>${escapeHtml(plan.shouldMove)}</div>
+    <div class="card">
+      ${plan.categories.map(c => `<div class="plan-cat-row"><div class="plan-cat-name" style="color:${c.color}">${escapeHtml(c.name)}</div><div class="plan-cat-task">${escapeHtml(c.task)}</div></div>`).join('')}
+    </div>
+    <div class="card">${rotationHtml}</div>
+    <div class="recovery-banner">
+      <b style="display:block;margin-bottom:4px;">${escapeHtml(plan.recoveryLabel)}</b>${escapeHtml(plan.recoveryText)}
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>CARRY-OVER FROM LAST WEEK</h3>${plan.carryOver.map(t=>`<div class="ro-row">• ${escapeHtml(t)}</div>`).join('')}</div>
+      <div class="card"><h3>PUSH UP TO MONTH / QUARTER</h3>${plan.pushUp.map(t=>`<div class="ro-row">• ${escapeHtml(t)}</div>`).join('')}</div>
+    </div>
+    <div class="grid2">
+      <div class="card plan-reflect"><h3>ENERGY CHECK</h3>
+        <label style="font-size:11px;color:#888;">Best day and why</label>
+        <textarea rows="2" oninput="saveWeekNotes('${ws}', {...loadWeekNotes('${ws}'), bestDay:this.value})">${escapeHtml(notes.bestDay)}</textarea>
+        <label style="font-size:11px;color:#888;">Hardest day and why</label>
+        <textarea rows="2" oninput="saveWeekNotes('${ws}', {...loadWeekNotes('${ws}'), hardestDay:this.value})">${escapeHtml(notes.hardestDay)}</textarea>
+      </div>
+      <div class="card plan-reflect"><h3>ONE WIN THIS WEEK</h3>
+        <textarea rows="5" oninput="saveWeekNotes('${ws}', {...loadWeekNotes('${ws}'), oneWin:this.value})">${escapeHtml(notes.oneWin)}</textarea>
+      </div>
+    </div>`;
+}
+
+function renderPlanQuarter() {
+  const app = document.getElementById('app');
+  const notes = loadQuarterNotes();
+  app.innerHTML = `${navPillsHtml('plan')}${planSubNavHtml()}
+    <h1 class="hist-title">${QUARTER_PLAN.label}</h1>
+    <div class="quarter-year-goal">
+      <label>THIS YEAR I'M WORKING TOWARD</label>
+      <input type="text" value="${escapeHtml(notes.yearGoal)}" oninput="saveQuarterNotes({...loadQuarterNotes(), yearGoal:this.value})">
+    </div>
+    <div class="recovery-banner" style="margin-bottom:14px;">${escapeHtml(QUARTER_PLAN.recoveryBanner)}</div>
+    ${QUARTER_PLAN.categories.map(c => `
+      <div class="quarter-cat-card" style="border-color:${c.color}">
+        <h4 style="color:${c.color}">${escapeHtml(c.name)}</h4>
+        <div class="quarter-cat-goal">${escapeHtml(c.goal)}</div>
+        <div class="quarter-months">
+          <div class="quarter-month-box"><div class="mlabel">JULY</div><div class="mtext">${escapeHtml(c.jul)}</div></div>
+          <div class="quarter-month-box"><div class="mlabel">AUGUST</div><div class="mtext">${escapeHtml(c.aug)}</div></div>
+          <div class="quarter-month-box"><div class="mlabel">SEPTEMBER</div><div class="mtext">${escapeHtml(c.sep)}</div></div>
+        </div>
+      </div>`).join('')}
+    <div class="grid2">
+      <div class="card plan-reflect"><h3>END OF QUARTER — CARRY TO Q4</h3>
+        <textarea rows="4" oninput="saveQuarterNotes({...loadQuarterNotes(), carryToQ4:this.value})">${escapeHtml(notes.carryToQ4)}</textarea>
+      </div>
+      <div class="card plan-reflect"><h3>BIGGEST WIN THIS QUARTER</h3>
+        <textarea rows="4" oninput="saveQuarterNotes({...loadQuarterNotes(), biggestWin:this.value})">${escapeHtml(notes.biggestWin)}</textarea>
+      </div>
+    </div>`;
+}
+
+// ---------- Celebration animation on task completion ----------
+const CONFETTI_BITS = ['🎉','✨','⭐','💚','🌟','👏','🎈'];
+function celebrateAt(el) {
+  if (!el || !el.getBoundingClientRect) return;
+  const rect = el.getBoundingClientRect();
+  const x = rect.left + rect.width / 2;
+  const y = rect.top + rect.height / 2;
+  const n = 10;
+  for (let i = 0; i < n; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.textContent = CONFETTI_BITS[Math.floor(Math.random() * CONFETTI_BITS.length)];
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 36 + Math.random() * 46;
+    piece.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
+    piece.style.setProperty('--ty', (Math.sin(angle) * dist - 24).toFixed(0) + 'px');
+    piece.style.setProperty('--rot', (Math.random() * 360 - 180).toFixed(0) + 'deg');
+    piece.style.left = x + 'px';
+    piece.style.top = y + 'px';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 800);
+  }
+}
+
+// ---------- Brain dump bullet system + evening review ----------
+const BULLET = { task:'•', event:'○', note:'–', important:'★' };
+function insertBullet(tag) {
+  const ta = document.getElementById('brainDumpTextarea');
+  if (!ta) return;
+  const symbol = BULLET[tag];
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const value = ta.value;
+  const before = value.slice(0, start);
+  const needsNewline = before.length > 0 && !before.endsWith('\n');
+  const insertText = (needsNewline ? '\n' : '') + symbol + ' ';
+  ta.value = before + insertText + value.slice(end);
+  const newPos = before.length + insertText.length;
+  ta.selectionStart = ta.selectionEnd = newPos;
+  ta.focus();
+  state.brainDump = ta.value;
+  persistDebounced();
+}
+function guessTag(line) {
+  const t = line.trim();
+  if (t.startsWith(BULLET.task)) return 'task';
+  if (t.startsWith(BULLET.event)) return 'event';
+  if (t.startsWith(BULLET.important)) return 'important';
+  return 'note';
+}
+function stripBullet(line) { return line.replace(/^[•○–★]\s*/, '').trim(); }
+
+let pendingDumpReview = null;
+function maybeShowEveningReview() {
+  const hr = new Date().getHours();
+  if (hr < 20 || !state.brainDump || !state.brainDump.trim() || state.brainDumpReviewed) return;
+  const lines = state.brainDump.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  if (lines.length === 0) return;
+  pendingDumpReview = { lines: lines.map(l => ({ text: stripBullet(l), tag: guessTag(l) })) };
+  renderEveningReviewModal();
+}
+function renderEveningReviewModal() {
+  const app = document.getElementById('app');
+  const itemsHtml = pendingDumpReview.lines.map((it,i) => `
+    <div class="item">
+      <div style="flex:1;">
+        <div class="txt">${escapeHtml(it.text)}</div>
+        <div class="tagrow">
+          ${['task','event','note','important'].map(tg=>`<button class="tagbtn ${it.tag===tg?'sel':''}" onclick="setDumpTag(${i},'${tg}')">${BULLET[tg]} ${tg}</button>`).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+  app.innerHTML = `
+    <div class="modal" style="margin-top:40px;">
+      <h2>Quick brain dump review</h2>
+      <p class="sub">Tag each line so it's easy to scan later. Anything tagged "task" gets added to your task list below.</p>
+      ${itemsHtml}
+      <button class="start-btn" onclick="finishEveningReview()">Save &amp; Continue</button>
+      <button class="skip-btn" onclick="skipEveningReview()">Skip for tonight</button>
+    </div>`;
+}
+function setDumpTag(i, tag) { pendingDumpReview.lines[i].tag = tag; renderEveningReviewModal(); }
+async function finishEveningReview() {
+  state.brainDump = pendingDumpReview.lines.map(it => BULLET[it.tag] + ' ' + it.text).join('\n');
+  pendingDumpReview.lines.filter(it => it.tag === 'task').forEach(it => {
+    if (!state.dumpTasks.some(dt => dt.text === it.text)) state.dumpTasks.push({ text: it.text, done:false });
+  });
+  state.brainDumpReviewed = true;
+  pendingDumpReview = null;
+  await persist();
+  render();
+}
+function skipEveningReview() {
+  state.brainDumpReviewed = true;
+  pendingDumpReview = null;
+  persist();
+  render();
+}
+function toggleDumpTaskDone(i, v, el) { state.dumpTasks[i].done = v; persist(); if (v) celebrateAt(el); }
+function toggleStepTaskDone(i, v, el) { state.stepTasks[i].done = v; persist(); if (v) celebrateAt(el); }
+
+// ---------- AI goal breakdown flow ----------
+let pendingBreakdown = null;
+
+async function callBreakdownAPI(goal) {
+  if (!BREAKDOWN_FUNCTION_URL || BREAKDOWN_FUNCTION_URL.startsWith("PASTE_")) {
+    throw new Error("Breakdown isn't set up yet — the app needs a Supabase Edge Function URL and shared secret filled in near the top of this file. Ask Claude to walk you through deploying it.");
+  }
+  const resp = await fetch(BREAKDOWN_FUNCTION_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-planner-secret": BREAKDOWN_SHARED_SECRET },
+    body: JSON.stringify({ goal })
+  });
+  let data;
+  try { data = await resp.json(); } catch (e) { throw new Error("Breakdown service returned an unexpected response (HTTP " + resp.status + ")."); }
+  if (!resp.ok) throw new Error(data.error || ("Breakdown request failed (HTTP " + resp.status + ")."));
+  if (!Array.isArray(data.steps) || data.steps.length === 0) throw new Error("Didn't get any steps back — try rephrasing the goal.");
+  return data.steps;
+}
+
+function runBreakdownFlow(goalText) {
+  const goal = (goalText || "").trim();
+  if (!goal) return;
+  renderBreakdownLoading(goal);
+  callBreakdownAPI(goal).then(steps => {
+    pendingBreakdown = { goal, steps: steps.map(s => ({ text: s, include: true })) };
+    renderBreakdownModal();
+  }).catch(err => {
+    renderBreakdownError(goal, err.message);
+  });
+}
+
+function renderBreakdownLoading(goal) {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="modal" style="margin-top:60px; text-align:center;">
+      <div class="bd-spinner"></div>
+      <h2 style="margin-top:14px;">Breaking it down...</h2>
+      <p class="sub">"${escapeHtml(goal)}"</p>
+    </div>`;
+}
+function renderBreakdownError(goal, message) {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="modal" style="margin-top:60px;">
+      <h2>Couldn't break that down</h2>
+      <p class="sub">${escapeHtml(message)}</p>
+      <button class="start-btn" onclick="runBreakdownFlow(${JSON.stringify(goal)})">Try again</button>
+      <button class="skip-btn" onclick="cancelBreakdown()">Close</button>
+    </div>`;
+}
+function renderBreakdownModal() {
+  const app = document.getElementById('app');
+  const itemsHtml = pendingBreakdown.steps.map((s, i) => `
+    <div class="item">
+      <input type="checkbox" ${s.include ? "checked" : ""} onchange="toggleBreakdownInclude(${i})">
+      <div class="txt">${escapeHtml(s.text)}</div>
+    </div>`).join("");
+  app.innerHTML = `
+    <div class="modal" style="margin-top:40px;">
+      <h2>Here's a way in</h2>
+      <p class="sub">Broken down from: &ldquo;${escapeHtml(pendingBreakdown.goal)}&rdquo;. Keep what fits today — anything you uncheck still gets saved, spread one-per-day into the next few days so it's never lost.</p>
+      ${itemsHtml}
+      <button class="start-btn" onclick="confirmBreakdown()">Add to my plan</button>
+      <button class="skip-btn" onclick="cancelBreakdown()">Cancel</button>
+    </div>`;
+}
+function toggleBreakdownInclude(i) { pendingBreakdown.steps[i].include = !pendingBreakdown.steps[i].include; renderBreakdownModal(); }
+function cancelBreakdown() { pendingBreakdown = null; render(); }
+
+async function confirmBreakdown() {
+  const included = pendingBreakdown.steps.filter(s => s.include).map(s => s.text);
+  const deferred = pendingBreakdown.steps.filter(s => !s.include).map(s => s.text);
+
+  included.forEach(text => state.stepTasks.push({ text, done: false }));
+  await persist();
+
+  let d = addDaysStr(state.date, 1);
+  for (const text of deferred) {
+    let rec = await loadRecord(d);
+    if (!rec) rec = blankRecord(d);
+    rec.stepTasks.push({ text, done: false });
+    await saveRecord(rec);
+    d = addDaysStr(d, 1);
+  }
+
+  pendingBreakdown = null;
+  render();
 }
 
 function collectUnfinished(rec) {
@@ -427,6 +1205,7 @@ async function init() {
     await saveRecord(state);
     await setMeta({ lastDate: today });
     render();
+    maybeShowEveningReview();
     return;
   }
 
@@ -434,6 +1213,7 @@ async function init() {
     state = await loadRecord(today);
     if (!state) { state = blankRecord(today); await saveRecord(state); }
     render();
+    maybeShowEveningReview();
     return;
   }
 
@@ -446,6 +1226,7 @@ async function init() {
     await saveRecord(state);
     await setMeta({ lastDate: today });
     render();
+    maybeShowEveningReview();
   } else {
     pendingReview = { items: items.map(i => ({ ...i, carry:true })), draft };
     renderReviewModal();
@@ -486,9 +1267,14 @@ async function finishReview() {
   await setMeta({ lastDate: state.date });
   pendingReview = null;
   render();
+  maybeShowEveningReview();
 }
 
-function escapeHtml(s) { const d=document.createElement('div'); d.innerText = s; return d.innerHTML; }
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 function fmtDateHeader(dateStr) {
   const d = new Date(dateStr + "T12:00:00");
@@ -504,12 +1290,29 @@ function persistDebounced() {
 window.addEventListener('pagehide', () => { if (state) saveRecord(state); });
 window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state) saveRecord(state); });
 
+function energyGroups(n) {
+  if (!n) return null;
+  if (n <= 2) return ['habits','home','dump'];
+  if (n === 3) return ['focus'];
+  return ['priorities','gls'];
+}
 function render() {
   const app = document.getElementById('app');
   const dow = dowOf(state.date);
   const showRecoveryBanner = inRecoveryWindow(state.date) && !state.recoveryConfirmed;
+  const accent = dayAccent(state.date);
+  app.style.setProperty('--dayFg', accent.fg);
+  app.style.setProperty('--dayBg', accent.bg);
+  const activeGroups = energyGroups(state.energy);
+  const gcls = (g) => !activeGroups ? '' : (activeGroups.includes(g) ? ' energy-active' : ' energy-dim');
 
   app.innerHTML = `
+    ${navPillsHtml('today')}
+    <div class="month-banner" style="color:${accent.fg}; background:${accent.bg};">${monthNameFromNum(new Date(state.date+"T12:00:00").getMonth()+1)} theme: ${accent.name}</div>
+    <div class="quote-card" style="border-color:${accent.fg};">
+      <span class="quote-mark" style="color:${accent.fg};">&ldquo;</span>${escapeHtml(quoteForDate(state.date))}
+      <span class="quote-sticker">${stickerForDate(state.date)}</span>
+    </div>
     ${showRecoveryBanner ? `
     <div class="recovery-banner">
       <b>This date falls in your recovery window.</b> Turn on Recovery Mode today?
@@ -539,17 +1342,36 @@ function render() {
       [1,2,3,4,5].map(d => `<span class="${d===dow?'hl':''}">${ROTATION_LABEL_SHORT[d]}</span>`).join(" &nbsp;|&nbsp; ")
     } &nbsp;|&nbsp; <span class="${(dow===6||dow===0)?'hl':''}">Sat/Sun: Family</span></div>
 
+    <div class="card big-goal-card">
+      <h3>STUCK ON SOMETHING BIG? <span class="sticker">🧩</span></h3>
+      <p style="font-size:12px; color:#5a7a68; margin:0;">Type the goal that's overwhelming you — get 3-5 tiny first steps back.</p>
+      <div class="big-goal-row">
+        <input type="text" id="bigGoalInput" placeholder="e.g. deal with the ACH transition emails...">
+        <button onclick="runBreakdownFlow(document.getElementById('bigGoalInput').value)">Break it down</button>
+      </div>
+    </div>
+
+    ${state.stepTasks && state.stepTasks.length ? `
+    <div class="card carried-card" style="border-style:dotted; border-color:var(--green);">
+      <h3>TODAY'S BROKEN-DOWN STEPS <span class="sticker">🧩</span></h3>
+      ${state.stepTasks.map((t,i) => `
+        <div class="carried-row">
+          <input type="checkbox" ${t.done?"checked":""} onchange="toggleStepTaskDone(${i}, this.checked, this)">
+          <div>${escapeHtml(t.text)}</div>
+        </div>`).join("")}
+    </div>` : ``}
+
     ${state.carried.length ? `
     <div class="card carried-card">
-      <h3>CARRIED OVER FROM YESTERDAY</h3>
+      <h3>CARRIED OVER FROM YESTERDAY <span class="sticker">↩️</span></h3>
       ${state.carried.map((c,i) => `
         <div class="carried-row">
-          <input type="checkbox" ${c.done?"checked":""} onchange="toggleCarriedDone(${i}, this.checked)">
+          <input type="checkbox" ${c.done?"checked":""} onchange="toggleCarriedDone(${i}, this.checked, this)">
           <div>${escapeHtml(c.text)}<span class="tag">${escapeHtml(c.source)}</span></div>
         </div>`).join("")}
     </div>` : ``}
 
-    <div class="priorities-grid">
+    <div class="priorities-grid${gcls('priorities')}">
       ${state.priorities.map((p, i) => {
         const dim = state.recoveryMode && p.id !== 'A';
         return `
@@ -557,44 +1379,66 @@ function render() {
           <span class="letter">${p.id}</span>
           <textarea rows="3" placeholder="${dim ? '(skip — recovery mode)' : 'priority...'}" oninput="state.priorities[${i}].text=this.value; persistDebounced()" onblur="persist()" ${dim?'disabled':''}>${escapeHtml(p.text)}</textarea>
           <input class="conseq" type="text" placeholder="if this slips..." value="${escapeHtml(p.consequence)}" oninput="state.priorities[${i}].consequence=this.value; persistDebounced()" onblur="persist()" ${dim?'disabled':''}>
-          <div class="done-row"><label><input type="checkbox" ${p.done?"checked":""} onchange="togglePriorityDone(${i}, this.checked)"> done</label></div>
+          <div class="done-row"><label><input type="checkbox" ${p.done?"checked":""} onchange="togglePriorityDone(${i}, this.checked, this)"> done</label>
+            ${p.text.trim() ? `<button class="breakdown-btn" style="margin-left:8px;" onclick="runBreakdownFlow(${JSON.stringify(p.text)})">🧩 Break it down</button>` : ``}
+          </div>
         </div>`;
       }).join("")}
     </div>
 
-    <div class="card habit-card">
-      <h3>DAILY NON-NEGOTIABLES</h3>
-      <div class="habit-row"><input type="checkbox" ${state.habits.walk?"checked":""} onchange="toggleHabit('walk',this.checked)"> 5-min walk</div>
-      <div class="habit-row"><input type="checkbox" ${state.habits.water?"checked":""} onchange="toggleHabit('water',this.checked)"> 60oz water</div>
-      <div class="habit-row"><input type="checkbox" ${state.habits.protein?"checked":""} onchange="toggleHabit('protein',this.checked)"> 100g protein</div>
-      <div class="habit-row"><input type="checkbox" ${state.habits.bible?"checked":""} onchange="toggleHabit('bible',this.checked)"> Bible time</div>
-      <div class="habit-row"><input type="checkbox" ${state.habits.teeth?"checked":""} onchange="toggleHabit('teeth',this.checked)"> Brush teeth (AM/PM)</div>
+    ${state.dumpTasks && state.dumpTasks.length ? `
+    <div class="card carried-card" style="border-style:dotted;">
+      <h3>FROM BRAIN DUMP <span class="sticker">📝</span></h3>
+      ${state.dumpTasks.map((t,i) => `
+        <div class="carried-row">
+          <input type="checkbox" ${t.done?"checked":""} onchange="toggleDumpTaskDone(${i}, this.checked, this)">
+          <div style="flex:1;">${escapeHtml(t.text)}</div>
+          <button class="breakdown-btn" onclick="runBreakdownFlow(${JSON.stringify(t.text)})">🧩</button>
+        </div>`).join("")}
+    </div>` : ``}
+
+    <div class="card habit-card${gcls('habits')}">
+      <div class="tape"></div>
+      <h3>DAILY NON-NEGOTIABLES <span class="sticker">🌱</span></h3>
+      <div class="habit-row"><input type="checkbox" ${state.habits.walk?"checked":""} onchange="toggleHabit('walk',this.checked,this)"> 5-min walk</div>
+      <div class="habit-row"><input type="checkbox" ${state.habits.water?"checked":""} onchange="toggleHabit('water',this.checked,this)"> 60oz water</div>
+      <div class="habit-row"><input type="checkbox" ${state.habits.protein?"checked":""} onchange="toggleHabit('protein',this.checked,this)"> 100g protein</div>
+      <div class="habit-row"><input type="checkbox" ${state.habits.bible?"checked":""} onchange="toggleHabit('bible',this.checked,this)"> Bible time</div>
+      <div class="habit-row"><input type="checkbox" ${state.habits.teeth?"checked":""} onchange="toggleHabit('teeth',this.checked,this)"> Brush teeth (AM/PM)</div>
+      <div class="habit-row"><input type="checkbox" ${state.habits.guitar?"checked":""} onchange="toggleHabit('guitar',this.checked,this)"> Guitar practice 10 min</div>
     </div>
 
     <div class="grid2">
-      <div class="card braindump-card">
-        <h3>BRAIN DUMP</h3>
-        <textarea placeholder="anything on your mind..." oninput="state.brainDump=this.value; persistDebounced()" onblur="persist()">${escapeHtml(state.brainDump)}</textarea>
+      <div class="card braindump-card${gcls('dump')}">
+        <h3>BRAIN DUMP <span class="sticker">🧠</span></h3>
+        <textarea id="brainDumpTextarea" placeholder="anything on your mind..." oninput="state.brainDump=this.value; persistDebounced()" onblur="persist()">${escapeHtml(state.brainDump)}</textarea>
+        <div class="bullet-legend">
+          <button type="button" class="bullet-btn" onclick="insertBullet('task')">${BULLET.task} task</button>
+          <button type="button" class="bullet-btn" onclick="insertBullet('event')">${BULLET.event} event</button>
+          <button type="button" class="bullet-btn" onclick="insertBullet('note')">${BULLET.note} note</button>
+          <button type="button" class="bullet-btn" onclick="insertBullet('important')">${BULLET.important} important</button>
+          <span class="bullet-hint">— after 8pm, reopening the app will offer to help tag these</span>
+        </div>
       </div>
       <div>
         <div class="card feel-card">
-          <h3>HOW I FEEL</h3>
+          <h3>HOW I FEEL <span class="sticker">💭</span></h3>
           <div class="feel-opts">
             ${["drained","rough","okay","good","great"].map(f => `
               <div class="feel-opt ${state.feeling===f?'sel':''}" onclick="setFeeling('${f}')">
-                ${({drained:"😩",rough:"😕",okay:"😐",good:"🙂",great:"😄"})[f]}
+                ${moodIconSvg(f, state.feeling===f)}
                 <div class="lbl">${f}</div>
               </div>`).join("")}
           </div>
         </div>
         <div class="card energy-card">
-          <h3>ENERGY TANK</h3>
+          <h3>ENERGY TANK <span class="sticker">⚡</span></h3>
           <div class="energy-bar">
             ${[1,2,3,4,5].map(n => `<div class="energy-seg ${state.energy>=n?'on':''}" onclick="setEnergy(${n})"></div>`).join("")}
           </div>
         </div>
         <div class="card fumble-card">
-          <h3>FUMBLE TRIGGERS</h3>
+          <h3>FUMBLE TRIGGERS <span class="sticker">⚠️</span></h3>
           <input type="text" placeholder="trigger 1..." value="${escapeHtml(state.fumbles[0])}" oninput="state.fumbles[0]=this.value; persistDebounced()" onblur="persist()">
           <input type="text" placeholder="trigger 2..." value="${escapeHtml(state.fumbles[1])}" oninput="state.fumbles[1]=this.value; persistDebounced()" onblur="persist()">
         </div>
@@ -602,13 +1446,14 @@ function render() {
     </div>
 
     <div class="grid3">
-      ${laneCardHtml("gls", state.lanes.glsTitle, state.lanes.gls, false)}
-      ${laneCardHtml("focus", "Today's Focus: " + (state.recoveryMode ? "Recovery" : state.focusCategory), state.lanes.focus, false)}
-      ${laneCardHtml("home", "Home, Family & Me", state.lanes.home, false)}
+      ${laneCardHtml("gls", state.lanes.glsTitle, state.lanes.gls, false, gcls('gls'))}
+      ${laneCardHtml("focus", "Today's Focus: " + (state.recoveryMode ? "Recovery" : state.focusCategory), state.lanes.focus, false, gcls('focus'))}
+      ${laneCardHtml("home", "Home, Family & Me", state.lanes.home, false, gcls('home'))}
     </div>
 
     <div class="card win-card">
-      <h3>WIN + GRATITUDE</h3>
+      <div class="tape tape-gold"></div>
+      <h3>WIN + GRATITUDE <span class="sticker">🏆</span></h3>
       <label>Today I'm proud I...</label>
       <input type="text" value="${escapeHtml(state.winProud)}" oninput="state.winProud=this.value; persistDebounced()" onblur="persist()">
       <label>Grateful for...</label>
@@ -620,25 +1465,26 @@ function render() {
   `;
 }
 
-function laneCardHtml(key, title, items, editableTitle) {
+function laneCardHtml(key, title, items, editableTitle, extraClass) {
   return `
-    <div class="card lane-card">
+    <div class="card lane-card${extraClass || ''}">
       <h3 style="margin-bottom:8px;">${escapeHtml(title)}</h3>
       ${items.map((it, i) => `
         <div class="lane-row">
-          <input type="checkbox" ${it.done?"checked":""} onchange="toggleLaneDone('${key}',${i}, this.checked)">
+          <input type="checkbox" ${it.done?"checked":""} onchange="toggleLaneDone('${key}',${i}, this.checked, this)">
           <input type="text" placeholder="..." value="${escapeHtml(it.text)}" oninput="state.lanes['${key}'][${i}].text=this.value; persistDebounced()" onblur="persist()">
+          ${it.text.trim() ? `<button class="breakdown-btn" onclick="runBreakdownFlow(${JSON.stringify(it.text)})">🧩</button>` : ``}
         </div>`).join("")}
     </div>`;
 }
 
 // ---- event handlers ----
-function toggleHabit(k, v) { state.habits[k] = v; persist(); }
+function toggleHabit(k, v, el) { state.habits[k] = v; persist(); if (v) celebrateAt(el); }
 function setFeeling(f) { state.feeling = f; render(); persist(); }
 function setEnergy(n) { state.energy = (state.energy === n) ? n-1 : n; render(); persist(); }
-function togglePriorityDone(i, v) { state.priorities[i].done = v; persist(); }
-function toggleLaneDone(key, i, v) { state.lanes[key][i].done = v; persist(); }
-function toggleCarriedDone(i, v) { state.carried[i].done = v; persist(); }
+function togglePriorityDone(i, v, el) { state.priorities[i].done = v; persist(); if (v) celebrateAt(el); }
+function toggleLaneDone(key, i, v, el) { state.lanes[key][i].done = v; persist(); if (v) celebrateAt(el); }
+function toggleCarriedDone(i, v, el) { state.carried[i].done = v; persist(); if (v) celebrateAt(el); }
 function toggleRecoveryManual(v) { state.recoveryMode = v; state.recoveryConfirmed = true; render(); persist(); }
 function setRecovery(v) { state.recoveryMode = v; state.recoveryConfirmed = true; render(); persist(); }
 

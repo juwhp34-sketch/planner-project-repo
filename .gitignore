@@ -2,3 +2,6 @@
 *.png
 *.jpg
 node_modules/
+supabase/.temp/
+.env
+.env.*

@@ -17,8 +17,9 @@
   * { box-sizing: border-box; }
   body {
     margin: 0; font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
-    background: var(--bg); color: var(--dark); padding-bottom: 60px;
+    background: var(--dayBg, var(--bg)); color: var(--dark); padding-bottom: 60px;
     -webkit-tap-highlight-color: transparent;
+    transition: background-color .3s ease;
   }
   .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 40px; }
   .top { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:3px solid var(--dayFg, var(--dark)); padding-bottom:12px; margin-bottom:14px; gap:10px; flex-wrap:wrap; }
@@ -34,7 +35,7 @@
   .rotation b { color:#555; }
   .rotation .hl { color:var(--red); font-weight:800; }
 
-  .card { border-radius:10px; padding:14px 16px; margin-bottom:12px; position:relative; }
+  .card { border-radius:10px; padding:14px 16px; margin-bottom:12px; position:relative; background:#fff; }
   .card h3 { margin:0 0 10px; font-size:13px; letter-spacing:0.5px; }
   .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
   .grid3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
@@ -1703,6 +1704,7 @@ function collectUnfinished(rec) {
 
 async function init() {
   const today = todayStr();
+  applyDayTheme(today); // set the day's tint immediately, before any async work or modals
   let meta = await getMeta();
 
   if (!meta) {
@@ -1801,13 +1803,19 @@ function energyGroups(n) {
   if (n === 3) return ['focus'];
   return ['priorities','gls'];
 }
+function applyDayTheme(dateStr) {
+  const accent = dayAccent(dateStr);
+  // Set on the document root (not just #app) so the tint reaches <body> too — that's what
+  // gives the whole page a subtle daily wash, not just a couple of accent details.
+  document.documentElement.style.setProperty('--dayFg', accent.fg);
+  document.documentElement.style.setProperty('--dayBg', accent.bg);
+  return accent;
+}
 function render() {
   const app = document.getElementById('app');
   const dow = dowOf(state.date);
   const showRecoveryBanner = inRecoveryWindow(state.date) && !state.recoveryConfirmed;
-  const accent = dayAccent(state.date);
-  app.style.setProperty('--dayFg', accent.fg);
-  app.style.setProperty('--dayBg', accent.bg);
+  const accent = applyDayTheme(state.date);
   const activeGroups = energyGroups(state.energy);
   const gcls = (g) => !activeGroups ? '' : (activeGroups.includes(g) ? ' energy-active' : ' energy-dim');
 

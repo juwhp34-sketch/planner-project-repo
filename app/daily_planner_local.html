@@ -224,6 +224,26 @@
   .quarter-month-box .mtext { font-size:12px; }
   .plan-reflect textarea { width:100%; min-height:60px; border:none; background:transparent; font-family:inherit; font-size:13px; resize:vertical; }
   .plan-reflect textarea:focus { outline:none; }
+  .plan-manage-row { display:flex; gap:8px; margin-bottom:14px; }
+  .plan-manage-btn { flex:1; padding:8px; border-radius:8px; border:1px solid #ccc; background:#fff; font-size:11px; font-weight:600; color:#666; cursor:pointer; }
+  .plan-manage-btn:hover { border-color:var(--dark); color:var(--dark); }
+  .plan-manage-btn.plan-danger { color:var(--red); border-color:#f3cccc; }
+  .plan-manage-btn.plan-danger:hover { background:var(--redBg); border-color:var(--red); }
+  .plan-field-label { display:block; font-size:11px; color:#888; margin:10px 0 4px; }
+  .plan-input { width:100%; border:1px solid #ddd; border-radius:8px; padding:8px 10px; font-family:inherit; font-size:13px; background:#fff; resize:vertical; }
+  .plan-input:focus { outline:none; border-color:var(--green); }
+  .plan-move-input { width:100%; border:none; background:transparent; color:#fff; font-family:inherit; font-size:13px; padding:6px 0 0; resize:vertical; }
+  .plan-move-input::placeholder { color:rgba(255,255,255,0.6); }
+  .plan-move-input:focus { outline:none; }
+  .plan-cat-task-input { flex:1; border:none; background:transparent; font-family:inherit; font-size:13px; resize:vertical; padding:0; }
+  .plan-cat-task-input:focus { outline:none; }
+  .plan-banner-input { width:100%; border:none; background:transparent; font-family:inherit; font-size:13px; color:inherit; resize:vertical; padding:0; }
+  .plan-banner-input:focus { outline:none; }
+  .plan-rotation-controls { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:10px; font-size:12px; color:#888; }
+  .quarter-cat-goal-input { width:100%; border:none; background:transparent; font-family:inherit; font-size:12px; font-style:italic; color:#666; resize:vertical; margin-bottom:8px; padding:0; }
+  .quarter-cat-goal-input:focus { outline:none; }
+  .quarter-month-input { width:100%; border:none; background:transparent; font-family:inherit; font-size:12px; resize:vertical; padding:0; }
+  .quarter-month-input:focus { outline:none; }
 
   /* Modal */
   .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:flex-end; justify-content:center; z-index:50; }
@@ -646,10 +666,14 @@ function moodIconSvg(mood, selected) {
 
 // ---------- History browsing (Year > Month > Week > Day) ----------
 function getAllRecordDates() {
+  // Only actual day records look like "planner:YYYY-MM-DD" — everything else (planner:meta,
+  // planner:weeknotes:*, planner:quarterPlans, planner:weeklyPlans, planner:yeargoal:*, etc.)
+  // is a different feature's storage and must not be mistaken for a day.
+  const dayKeyPattern = /^planner:\d{4}-\d{2}-\d{2}$/;
   const dates = [];
   for (let i=0;i<localStorage.length;i++) {
     const k = localStorage.key(i);
-    if (k && k.startsWith('planner:') && k !== 'planner:meta') dates.push(k.slice('planner:'.length));
+    if (k && dayKeyPattern.test(k)) dates.push(k.slice('planner:'.length));
   }
   return dates.sort();
 }
@@ -811,7 +835,7 @@ async function exportWeek(ws) {
 }
 
 // ---------- Weekly Plan & Quarter Plan (from the Weekly Review / Quarter-Month Plan docs) ----------
-const WEEKLY_PLANS = {
+const DEFAULT_WEEKLY_PLANS = {
   "2026-07-13": {
     end: "2026-07-19",
     shouldMove: "Sermon prep done before Sunday (7/19). Admin, Student Ministry & Home rotation tasks progressed. Daily ACH emails on track.",
@@ -863,49 +887,193 @@ const WEEKLY_PLANS = {
     recoveryText: "only GLS (if cleared) and Personal/health tasks count. Everything else auto-carries to next week without guilt — that's the plan working, not you failing.",
     carryOver: ["Everything from Book Keeping, Admin, Student Ministry, Lopez Home not finished before surgery — all of it waits."],
     pushUp: ["Resume rotation once cleared by your doctor — target early-to-mid August depending on recovery."]
+  },
+  "2026-08-31": {
+    end: "2026-09-06",
+    shouldMove: "First full week back to normal rotation since recovery. Finish the school term (ends Sep 3) and knock out the Book Keeping/Admin items that stalled during recovery.",
+    hl: 'THU', rotationDim: false,
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", task:"Resume full daily ACH email cadence (50/day) — the recovery pause is over." },
+      { name:"Book Keeping", color:"var(--blue)", task:"Learn the PEX card system and reimburse Whitney — both stalled during recovery. (carried from July/August)" },
+      { name:"Administration", color:"var(--tan)", task:"Get the church Google phone number and finalize the phone plan — stalled during recovery. (carried from July/August)" },
+      { name:"Student Ministry", color:"var(--purple)", task:"Ease back in — confirm the September meetup date." },
+      { name:"Personal", color:"var(--orange)", task:"Finish school term (ends Sep 3). Set up your daily medicine system for the new season." },
+      { name:"Lopez Home", color:"var(--green)", task:"Move Whitney's dresser — the thing that's been pushed twice already. (carried from July)" }
+    ],
+    recoveryLabel: "BACK TO FULL ROTATION —",
+    recoveryText: "the recovery window has closed. Categories are active again — ease back in at a sustainable pace, not all at once.",
+    carryOver: ["Google phone number + PEX card system + Whitney's dresser — all deferred since July, first priority back"],
+    pushUp: ["Organize Book Keeping invoices/statements into a binder — if this week doesn't have room, push to next week"]
+  },
+  "2026-09-07": {
+    end: "2026-09-13",
+    shouldMove: "Keep ACH emails on pace and get the cleaning schedule + invoice binder actually finished.",
+    hl: 'TUE', rotationDim: false,
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", task:"Continue daily ACH emails (50/day). Catch up any daily cash log gaps from recovery." },
+      { name:"Book Keeping", color:"var(--blue)", task:"Organize invoices/statements into a binder. Continue building the Sep–Dec counting schedule." },
+      { name:"Administration", color:"var(--tan)", task:"Create the cleaning schedule (Juan/Whitney/Ikaika/Josh) — another item that stalled during recovery. (carried from August)" },
+      { name:"Student Ministry", color:"var(--purple)", task:"Start building the Sep–Dec volunteer schedule." },
+      { name:"Personal", color:"var(--orange)", task:"Settle into the new daily medicine routine." },
+      { name:"Lopez Home", color:"var(--green)", task:"Continue apartment remodel prep — second pass through storage." }
+    ],
+    recoveryLabel: "NORMAL ROTATION —",
+    recoveryText: "no special mode this week — standard Mon–Fri categories apply.",
+    carryOver: ["Anything not finished from the week of Aug 31"],
+    pushUp: ["Become a CORI (Student Ministry) — if it needs an external appointment/scheduling, this may need to push further out"]
+  },
+  "2026-09-14": {
+    end: "2026-09-20",
+    shouldMove: "Run the Student Ministry volunteer training day and keep Book Keeping/GLS on schedule for quarter close.",
+    hl: 'WED', rotationDim: false,
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", task:"ACH emails — aim to finish outstanding customers this week." },
+      { name:"Book Keeping", color:"var(--blue)", task:"Finalize Book Keeping SOPs so someone else could run them if needed." },
+      { name:"Administration", color:"var(--tan)", task:"Confirm the new cleaning schedule is actually running on its own." },
+      { name:"Student Ministry", color:"var(--purple)", task:"Volunteer training day. Get the check-in/out system live." },
+      { name:"Personal", color:"var(--orange)", task:"Protect rest — first full month back since recovery, watch energy levels." },
+      { name:"Lopez Home", color:"var(--green)", task:"Donate the clothes/items identified during apartment sorting." }
+    ],
+    recoveryLabel: "NORMAL ROTATION —",
+    recoveryText: "no special mode this week — standard Mon–Fri categories apply.",
+    carryOver: [],
+    pushUp: ["Whitney's dresser follow-up if not fully resolved yet"]
+  },
+  "2026-09-21": {
+    end: "2026-09-27",
+    shouldMove: "Finalize the ACH transition for all remaining customers and run the September Student Ministry meetup.",
+    hl: 'FRI', rotationDim: false,
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", task:"Finalize ACH transition for any remaining customers. Finish SOPs." },
+      { name:"Book Keeping", color:"var(--blue)", task:"Submit reports for the quarter." },
+      { name:"Administration", color:"var(--tan)", task:"Confirm all admin systems are running independently — no more manual reminders needed." },
+      { name:"Student Ministry", color:"var(--purple)", task:"September meetup." },
+      { name:"Personal", color:"var(--orange)", task:"Check in on the medication system — adjust if anything isn't sticking." },
+      { name:"Lopez Home", color:"var(--green)", task:"Push toward the apartment being fully organized before quarter's end." }
+    ],
+    recoveryLabel: "NORMAL ROTATION —",
+    recoveryText: "no special mode this week.",
+    carryOver: [],
+    pushUp: ["Anything from Book Keeping/Admin not fully closed — push into the Q4 goals"]
+  },
+  "2026-09-28": {
+    end: "2026-10-04",
+    shouldMove: "Close out Q3 loose ends and get ready for Q4 planning.",
+    hl: 'MON', rotationDim: false,
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", task:"Wrap up any final Q3 ACH items." },
+      { name:"Book Keeping", color:"var(--blue)", task:"Finalize the Sep–Dec counting schedule. Confirm SOPs are usable by someone else." },
+      { name:"Administration", color:"var(--tan)", task:"Maintain what's running — no new systems this week." },
+      { name:"Student Ministry", color:"var(--purple)", task:"Debrief from the September meetup — note anything for Q4." },
+      { name:"Personal", color:"var(--orange)", task:"Reflect on the quarter — energy, meds, routines. What actually worked?" },
+      { name:"Lopez Home", color:"var(--green)", task:"Final push: get the apartment fully organized." }
+    ],
+    recoveryLabel: "NORMAL ROTATION —",
+    recoveryText: "no special mode this week.",
+    carryOver: [],
+    pushUp: ["Anything still open rolls into the Q4 (Oct–Dec) goals — review the Quarter tab and adjust"]
   }
 };
-const WEEKLY_PLAN_KEYS = Object.keys(WEEKLY_PLANS).sort();
 const ROTATION_DAYS = [
   { d:'MON', cat:'Book Keeping' }, { d:'TUE', cat:'Admin' }, { d:'WED', cat:'Student Min.' },
   { d:'THU', cat:'Personal' }, { d:'FRI', cat:'Lopez Home' }, { d:'SAT/SUN', cat:'Family' }
 ];
 
-const QUARTER_PLAN = {
-  label: "Q3 2026 (JUL – SEP)",
-  recoveryBanner: "BARIATRIC SURGERY — JULY 29 (3–6 WK RECOVERY): July/August milestones below are intentionally light on Personal & Home. Recovering well is the milestone those months — everything else flexes around it.",
-  categories: [
-    { name:"GLS (Work)", color:"var(--dark)", goal:"ACH transition fully completed; all SOPs & daily reporting caught up and consistent.",
-      jul:"Move $2k unapplied out before Jul 25. Begin daily ACH emails (50/day).", aug:"Continue ACH emails. Catch up daily cash log + reports.", sep:"ACH transition complete for all applicable customers. Finalize SOPs." },
-    { name:"Book Keeping", color:"var(--blue)", goal:"Backlog closed: Hub Reports (Jan–Jun) submitted; all SOPs written & usable by someone else.",
-      jul:"Complete Hub Reports Jan–Jun. Start learning Aplos.", aug:"Learn PEX card system. Reimburse Whitney. Organize invoices/statements into binder.", sep:"Submit reports. Build Sep–Dec counting schedule. Finalize SOPs." },
-    { name:"Administration", color:"var(--tan)", goal:"Recurring systems running (cleaning, supplies, phone/comms) without depending on memory.",
-      jul:"AC follow-up. Organize kitchen + cleaning supply tracking system. Set up water delivery.", aug:"Create cleaning schedule (Juan/Whitney/Ikaika/Josh). Get church Google phone number.", sep:"Systems running independently. Phone plan finalized." },
-    { name:"Student Ministry", color:"var(--purple)", goal:"Sep–Dec fully staffed (volunteer schedule + trained) and classroom basics operational before fall.",
-      jul:"Print lessons Jul/Aug. Clean & organize room. Plan July meetup.", aug:"Build Sep–Dec volunteer schedule. Become a CORI. Plan August meetup.", sep:"Volunteer training day. Check-in/out system live. September meetup." },
-    { name:"Personal", color:"var(--orange)", goal:"Recover well from surgery, finish school term, stabilize meds/routine system.",
-      jul:"Surgery Jul 29 + begin recovery. Sermon prep (Jul 19). School lessons continue.", aug:"Recovery continues. Resume routines as cleared. Refill ADHD meds.", sep:"Finish school (ends Sep 3). Stable daily medicine system in place." },
-    { name:"Lopez Home", color:"var(--green)", goal:"Family command center + daughter's visual routine set up; home organized at a recovery-safe pace.",
-      jul:"Set up Joelle's bed/swing. Organize storage rack. Clean bathroom/fridge (delegate if recovering).", aug:"Family command center + daughter's visual chart. Organize kitchen cabinet.", sep:"Clear apartment for remodel. Donate clothes. Home fully organized." }
-  ]
+const DEFAULT_QUARTER_PLANS = {
+  "2026-Q3": {
+    label: "Q3 2026 (JUL – SEP)",
+    startDate: "2026-07-01", endDate: "2026-09-30",
+    months: ["July","August","September"],
+    recoveryBanner: "BARIATRIC SURGERY — JULY 29 (3–6 WK RECOVERY): July/August milestones below are intentionally light on Personal & Home. Recovering well is the milestone those months — everything else flexes around it.",
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", goal:"ACH transition fully completed; all SOPs & daily reporting caught up and consistent.",
+        m: ["Move $2k unapplied out before Jul 25. Begin daily ACH emails (50/day).", "Continue ACH emails. Catch up daily cash log + reports.", "ACH transition complete for all applicable customers. Finalize SOPs."] },
+      { name:"Book Keeping", color:"var(--blue)", goal:"Backlog closed: Hub Reports (Jan–Jun) submitted; all SOPs written & usable by someone else.",
+        m: ["Complete Hub Reports Jan–Jun. Start learning Aplos.", "Learn PEX card system. Reimburse Whitney. Organize invoices/statements into binder.", "Learn PEX card system + reimburse Whitney (carried from August). Organize invoices into binder. Submit reports. Build Sep–Dec counting schedule. Finalize SOPs."] },
+      { name:"Administration", color:"var(--tan)", goal:"Recurring systems running (cleaning, supplies, phone/comms) without depending on memory.",
+        m: ["AC follow-up. Organize kitchen + cleaning supply tracking system. Set up water delivery.", "Create cleaning schedule (Juan/Whitney/Ikaika/Josh). Get church Google phone number.", "Get Google phone number + finalize phone plan, create cleaning schedule (both carried from August). Systems running independently."] },
+      { name:"Student Ministry", color:"var(--purple)", goal:"Sep–Dec fully staffed (volunteer schedule + trained) and classroom basics operational before fall.",
+        m: ["Print lessons Jul/Aug. Clean & organize room. Plan July meetup.", "Build Sep–Dec volunteer schedule. Become a CORI. Plan August meetup.", "Volunteer training day. Check-in/out system live. September meetup. Become a CORI (carried from August) if scheduling allows."] },
+      { name:"Personal", color:"var(--orange)", goal:"Recover well from surgery, finish school term, stabilize meds/routine system.",
+        m: ["Surgery Jul 29 + begin recovery. Sermon prep (Jul 19). School lessons continue.", "Recovery continues. Resume routines as cleared. Refill ADHD meds.", "Finish school (ends Sep 3). Stable daily medicine system in place."] },
+      { name:"Lopez Home", color:"var(--green)", goal:"Family command center + daughter's visual routine set up; home organized at a recovery-safe pace.",
+        m: ["Set up Joelle's bed/swing. Organize storage rack. Clean bathroom/fridge (delegate if recovering).", "Family command center + daughter's visual chart. Organize kitchen cabinet.", "Move Whitney's dresser (carried from July). Clear apartment for remodel. Donate clothes. Home fully organized."] }
+    ]
+  },
+  "2026-Q4": {
+    label: "Q4 2026 (OCT – DEC)",
+    startDate: "2026-10-01", endDate: "2026-12-31",
+    months: ["October","November","December"],
+    recoveryBanner: "",
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", goal:"Maintain ACH transition gains; keep daily reporting fully caught up through year-end.",
+        m: ["Monitor ACH transition for any stragglers. Keep daily cash log current.", "Year-end prep — start gathering documents for Q4/annual reporting.", "Close out the year's GLS reporting cleanly."] },
+      { name:"Book Keeping", color:"var(--blue)", goal:"Sep–Dec counting schedule running smoothly; books fully caught up entering the new year.",
+        m: ["Run the new counting schedule for the first time — adjust as needed.", "Mid-quarter check-in on the counting schedule.", "Year-end books closed and organized."] },
+      { name:"Administration", color:"var(--tan)", goal:"All recurring systems (cleaning, phone, supplies) running independently without you.",
+        m: ["Spot-check the cleaning schedule and phone plan are holding.", "Handle any holiday-season logistics (schedules, coverage).", "Year-end admin wrap-up."] },
+      { name:"Student Ministry", color:"var(--purple)", goal:"Sep–Dec volunteer schedule fully running; become a CORI if not already done.",
+        m: ["Become a CORI if still outstanding. Keep volunteer schedule staffed.", "Plan any November/holiday ministry events.", "Plan a December event/wrap-up; volunteer schedule set for the new year."] },
+      { name:"Personal", color:"var(--orange)", goal:"Steady daily medicine system and rest through the busier holiday months.",
+        m: ["Keep the daily medicine system steady.", "Protect rest through the holidays — watch energy levels.", "End-of-year reflection — what worked this year, what to change."] },
+      { name:"Lopez Home", color:"var(--green)", goal:"Apartment fully organized and remodel-ready; home routines steady through the holidays.",
+        m: ["Finish anything left from the apartment organizing push.", "Prep home for the holiday season.", "Year-end home reset."] }
+    ]
+  }
 };
+
+// ---------- Weekly/Quarter plan storage (editable, backed by localStorage, seeded from defaults) ----------
+function loadWeeklyPlansStore() {
+  try { const v = localStorage.getItem('planner:weeklyPlans'); if (v) return JSON.parse(v); } catch (e) {}
+  const seeded = JSON.parse(JSON.stringify(DEFAULT_WEEKLY_PLANS));
+  localStorage.setItem('planner:weeklyPlans', JSON.stringify(seeded));
+  return seeded;
+}
+function saveWeeklyPlansStore() { localStorage.setItem('planner:weeklyPlans', JSON.stringify(weeklyPlansStore)); }
+let weeklyPlansSaveTimer = null;
+function saveWeeklyPlansDebounced() { clearTimeout(weeklyPlansSaveTimer); weeklyPlansSaveTimer = setTimeout(saveWeeklyPlansStore, 400); }
+
+function loadQuarterPlansStore() {
+  try { const v = localStorage.getItem('planner:quarterPlans'); if (v) return JSON.parse(v); } catch (e) {}
+  const seeded = JSON.parse(JSON.stringify(DEFAULT_QUARTER_PLANS));
+  localStorage.setItem('planner:quarterPlans', JSON.stringify(seeded));
+  return seeded;
+}
+function saveQuarterPlansStore() { localStorage.setItem('planner:quarterPlans', JSON.stringify(quarterPlansStore)); }
+let quarterPlansSaveTimer = null;
+function saveQuarterPlansDebounced() { clearTimeout(quarterPlansSaveTimer); quarterPlansSaveTimer = setTimeout(saveQuarterPlansStore, 400); }
+
+let weeklyPlansStore = loadWeeklyPlansStore();
+let quarterPlansStore = loadQuarterPlansStore();
+function getWeeklyPlanKeys() { return Object.keys(weeklyPlansStore).sort(); }
+function getQuarterKeys() { return Object.keys(quarterPlansStore).sort(); }
 
 function loadWeekNotes(ws) {
   try { const v = localStorage.getItem('planner:weeknotes:' + ws); return v ? JSON.parse(v) : { bestDay:'', hardestDay:'', oneWin:'' }; }
   catch (e) { return { bestDay:'', hardestDay:'', oneWin:'' }; }
 }
 function saveWeekNotes(ws, notes) { localStorage.setItem('planner:weeknotes:' + ws, JSON.stringify(notes)); }
-function loadQuarterNotes() {
-  try { const v = localStorage.getItem('planner:quarternotes:Q3-2026'); return v ? JSON.parse(v) : { yearGoal:'', carryToQ4:'', biggestWin:'' }; }
-  catch (e) { return { yearGoal:'', carryToQ4:'', biggestWin:'' }; }
+function loadQuarterNotes(qid) {
+  try { const v = localStorage.getItem('planner:quarternotes:' + qid); return v ? JSON.parse(v) : { carryToNext:'', biggestWin:'' }; }
+  catch (e) { return { carryToNext:'', biggestWin:'' }; }
 }
-function saveQuarterNotes(n) { localStorage.setItem('planner:quarternotes:Q3-2026', JSON.stringify(n)); }
+function saveQuarterNotes(qid, n) { localStorage.setItem('planner:quarternotes:' + qid, JSON.stringify(n)); }
+function loadYearGoal(year) { try { return localStorage.getItem('planner:yeargoal:' + year) || ''; } catch (e) { return ''; } }
+function saveYearGoal(year, val) { localStorage.setItem('planner:yeargoal:' + year, val); }
 
 let planSubView = 'week';
-let planWeekIndex = (() => {
+let currentQuarterId = (() => {
+  const keys = getQuarterKeys();
   const today = todayStr();
-  const idx = WEEKLY_PLAN_KEYS.findIndex(k => today >= k && today <= WEEKLY_PLANS[k].end);
-  return idx >= 0 ? idx : 0;
+  const contains = keys.find(qid => { const q = quarterPlansStore[qid]; return q.startDate && q.endDate && today >= q.startDate && today <= q.endDate; });
+  return contains || keys[keys.length - 1] || keys[0];
+})();
+let planWeekIndex = (() => {
+  const keys = getWeeklyPlanKeys();
+  const today = todayStr();
+  let idx = keys.findIndex(k => today >= k && today <= weeklyPlansStore[k].end);
+  if (idx < 0) idx = (keys.length && today > weeklyPlansStore[keys[keys.length - 1]].end) ? keys.length - 1 : 0;
+  return idx;
 })();
 
 function planSubNavHtml() {
@@ -920,12 +1088,63 @@ function renderPlanRoot() {
 }
 
 function planWeekPrev() { if (planWeekIndex > 0) { planWeekIndex--; renderPlanWeek(); } }
-function planWeekNext() { if (planWeekIndex < WEEKLY_PLAN_KEYS.length - 1) { planWeekIndex++; renderPlanWeek(); } }
+function planWeekNext() { const keys = getWeeklyPlanKeys(); if (planWeekIndex < keys.length - 1) { planWeekIndex++; renderPlanWeek(); } }
+
+function updateWeekField(ws, field, value) { weeklyPlansStore[ws][field] = value; saveWeeklyPlansDebounced(); }
+function updateWeekCategoryTask(ws, i, value) { weeklyPlansStore[ws].categories[i].task = value; saveWeeklyPlansDebounced(); }
+function updateWeekListField(ws, field, value) { weeklyPlansStore[ws][field] = value.split('\n').map(s=>s.trim()).filter(s=>s.length>0); saveWeeklyPlansDebounced(); }
+function updateWeekHl(ws, value) { weeklyPlansStore[ws].hl = value || null; saveWeeklyPlansStore(); renderPlanWeek(); }
+function updateWeekDim(ws, checked) { weeklyPlansStore[ws].rotationDim = checked; saveWeeklyPlansStore(); renderPlanWeek(); }
+
+function addNewWeek() {
+  const startInput = prompt("Start date for the new week (a Monday), format YYYY-MM-DD:", addDaysStr(todayStr(), 7));
+  if (!startInput) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(startInput)) { alert("Please use the format YYYY-MM-DD."); return; }
+  if (weeklyPlansStore[startInput]) { alert("A week already starts on that date — pick a different one or edit that week instead."); return; }
+  weeklyPlansStore[startInput] = {
+    end: addDaysStr(startInput, 6),
+    shouldMove: "",
+    hl: null, rotationDim: false,
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", task:"" },
+      { name:"Book Keeping", color:"var(--blue)", task:"" },
+      { name:"Administration", color:"var(--tan)", task:"" },
+      { name:"Student Ministry", color:"var(--purple)", task:"" },
+      { name:"Personal", color:"var(--orange)", task:"" },
+      { name:"Lopez Home", color:"var(--green)", task:"" }
+    ],
+    recoveryLabel: "NORMAL ROTATION —",
+    recoveryText: "no special mode this week.",
+    carryOver: [], pushUp: []
+  };
+  saveWeeklyPlansStore();
+  planWeekIndex = getWeeklyPlanKeys().indexOf(startInput);
+  renderPlanWeek();
+}
+function deleteCurrentWeek() {
+  const keys = getWeeklyPlanKeys();
+  if (keys.length === 0) return;
+  const ws = keys[planWeekIndex];
+  if (!confirm("Delete the week of " + fmtShort(ws) + "? This can't be undone.")) return;
+  delete weeklyPlansStore[ws];
+  saveWeeklyPlansStore();
+  const newKeys = getWeeklyPlanKeys();
+  planWeekIndex = Math.min(planWeekIndex, Math.max(0, newKeys.length - 1));
+  renderPlanWeek();
+}
 
 function renderPlanWeek() {
   const app = document.getElementById('app');
-  const ws = WEEKLY_PLAN_KEYS[planWeekIndex];
-  const plan = WEEKLY_PLANS[ws];
+  const keys = getWeeklyPlanKeys();
+  if (keys.length === 0) {
+    app.innerHTML = `${navPillsHtml('plan')}${planSubNavHtml()}
+      <p class="empty-hint">No weeks yet.</p>
+      <button class="export-btn" onclick="addNewWeek()">+ Add a new week</button>`;
+    return;
+  }
+  if (planWeekIndex >= keys.length) planWeekIndex = keys.length - 1;
+  const ws = keys[planWeekIndex];
+  const plan = weeklyPlansStore[ws];
   const notes = loadWeekNotes(ws);
 
   const rotationHtml = `<div class="plan-rotation">${ROTATION_DAYS.map(r => {
@@ -937,21 +1156,58 @@ function renderPlanWeek() {
     <div class="plan-week-nav">
       <button onclick="planWeekPrev()" ${planWeekIndex===0?'disabled':''}>‹</button>
       <div class="lbl">Week of ${fmtShort(ws)} – ${fmtShort(plan.end)}</div>
-      <button onclick="planWeekNext()" ${planWeekIndex===WEEKLY_PLAN_KEYS.length-1?'disabled':''}>›</button>
+      <button onclick="planWeekNext()" ${planWeekIndex===keys.length-1?'disabled':''}>›</button>
     </div>
+    <div class="plan-manage-row">
+      <button class="plan-manage-btn" onclick="addNewWeek()">+ Add new week</button>
+      <button class="plan-manage-btn plan-danger" onclick="deleteCurrentWeek()">Delete this week</button>
+    </div>
+
+    <label class="plan-field-label">Special tag for this week (optional — e.g. "RECOVERY WEEK")</label>
+    <input type="text" class="plan-input" value="${escapeHtml(plan.tag||'')}" placeholder="no tag" oninput="updateWeekField('${ws}','tag',this.value)" onblur="saveWeeklyPlansStore(); renderPlanWeek()">
     ${plan.tag ? `<div class="recovery-banner" style="margin-bottom:12px;">${escapeHtml(plan.tag)}</div>` : ''}
-    <div class="plan-move-strip"><b>THIS WEEK SHOULD MOVE</b>${escapeHtml(plan.shouldMove)}</div>
+
+    <div class="plan-move-strip">
+      <b>THIS WEEK SHOULD MOVE</b>
+      <textarea rows="2" class="plan-move-input" oninput="updateWeekField('${ws}','shouldMove',this.value)" onblur="saveWeeklyPlansStore()">${escapeHtml(plan.shouldMove)}</textarea>
+    </div>
+
     <div class="card">
-      ${plan.categories.map(c => `<div class="plan-cat-row"><div class="plan-cat-name" style="color:${c.color}">${escapeHtml(c.name)}</div><div class="plan-cat-task">${escapeHtml(c.task)}</div></div>`).join('')}
+      ${plan.categories.map((c,i) => `
+        <div class="plan-cat-row">
+          <div class="plan-cat-name" style="color:${c.color}">${escapeHtml(c.name)}</div>
+          <textarea class="plan-cat-task-input" rows="2" oninput="updateWeekCategoryTask('${ws}',${i},this.value)" onblur="saveWeeklyPlansStore()">${escapeHtml(c.task)}</textarea>
+        </div>`).join('')}
     </div>
-    <div class="card">${rotationHtml}</div>
+
+    <div class="card">
+      <div class="plan-rotation-controls">
+        <label>Highlight day:</label>
+        <select onchange="updateWeekHl('${ws}', this.value)">
+          <option value="">None</option>
+          ${['MON','TUE','WED','THU','FRI','SAT'].map(d=>`<option value="${d}" ${plan.hl===d?'selected':''}>${d}</option>`).join('')}
+        </select>
+        <label style="margin-left:10px;"><input type="checkbox" ${plan.rotationDim?'checked':''} onchange="updateWeekDim('${ws}', this.checked)"> Dim rotation (e.g. recovery week)</label>
+      </div>
+      ${rotationHtml}
+    </div>
+
+    <label class="plan-field-label">Status line label (e.g. "NOT A RECOVERY WEEK —")</label>
+    <input type="text" class="plan-input" value="${escapeHtml(plan.recoveryLabel)}" oninput="updateWeekField('${ws}','recoveryLabel',this.value)" onblur="saveWeeklyPlansStore()">
     <div class="recovery-banner">
-      <b style="display:block;margin-bottom:4px;">${escapeHtml(plan.recoveryLabel)}</b>${escapeHtml(plan.recoveryText)}
+      <b style="display:block;margin-bottom:4px;">${escapeHtml(plan.recoveryLabel)}</b>
+      <textarea rows="2" class="plan-banner-input" oninput="updateWeekField('${ws}','recoveryText',this.value)" onblur="saveWeeklyPlansStore()">${escapeHtml(plan.recoveryText)}</textarea>
     </div>
+
     <div class="grid2">
-      <div class="card"><h3>CARRY-OVER FROM LAST WEEK</h3>${plan.carryOver.map(t=>`<div class="ro-row">• ${escapeHtml(t)}</div>`).join('')}</div>
-      <div class="card"><h3>PUSH UP TO MONTH / QUARTER</h3>${plan.pushUp.map(t=>`<div class="ro-row">• ${escapeHtml(t)}</div>`).join('')}</div>
+      <div class="card"><h3>CARRY-OVER FROM LAST WEEK</h3>
+        <textarea rows="3" class="plan-input" placeholder="one item per line" oninput="updateWeekListField('${ws}','carryOver',this.value)" onblur="saveWeeklyPlansStore()">${escapeHtml((plan.carryOver||[]).join('\n'))}</textarea>
+      </div>
+      <div class="card"><h3>PUSH UP TO MONTH / QUARTER</h3>
+        <textarea rows="3" class="plan-input" placeholder="one item per line" oninput="updateWeekListField('${ws}','pushUp',this.value)" onblur="saveWeeklyPlansStore()">${escapeHtml((plan.pushUp||[]).join('\n'))}</textarea>
+      </div>
     </div>
+
     <div class="grid2">
       <div class="card plan-reflect"><h3>ENERGY CHECK</h3>
         <label style="font-size:11px;color:#888;">Best day and why</label>
@@ -965,32 +1221,96 @@ function renderPlanWeek() {
     </div>`;
 }
 
+function quarterSelectHtml(qid) {
+  const keys = getQuarterKeys();
+  return `<select onchange="switchQuarter(this.value)">
+    ${keys.map(k => `<option value="${k}" ${k===qid?'selected':''}>${escapeHtml(quarterPlansStore[k].label)}</option>`).join('')}
+  </select>`;
+}
+function switchQuarter(qid) { currentQuarterId = qid; renderPlanQuarter(); }
+function updateQuarterField(qid, field, value) { quarterPlansStore[qid][field] = value; saveQuarterPlansDebounced(); }
+function updateQuarterCategoryField(qid, i, field, value) { quarterPlansStore[qid].categories[i][field] = value; saveQuarterPlansDebounced(); }
+function updateQuarterCategoryMonth(qid, i, mi, value) { quarterPlansStore[qid].categories[i].m[mi] = value; saveQuarterPlansDebounced(); }
+
+function addNewQuarter() {
+  const label = prompt('Label for the new quarter (e.g. "Q1 2027 (JAN – MAR)"):');
+  if (!label) return;
+  const m1 = prompt("First month name:", "January"); if (!m1) return;
+  const m2 = prompt("Second month name:", "February"); if (!m2) return;
+  const m3 = prompt("Third month name:", "March"); if (!m3) return;
+  const startDate = prompt("Quarter start date (YYYY-MM-DD, optional but helps auto-select it later):", "") || "";
+  const endDate = prompt("Quarter end date (YYYY-MM-DD, optional):", "") || "";
+  const qid = label.replace(/[^A-Za-z0-9]/g,'').slice(0,24) + '-' + Date.now();
+  quarterPlansStore[qid] = {
+    label, startDate, endDate, months: [m1,m2,m3], recoveryBanner: "",
+    categories: [
+      { name:"GLS (Work)", color:"var(--dark)", goal:"", m:["","",""] },
+      { name:"Book Keeping", color:"var(--blue)", goal:"", m:["","",""] },
+      { name:"Administration", color:"var(--tan)", goal:"", m:["","",""] },
+      { name:"Student Ministry", color:"var(--purple)", goal:"", m:["","",""] },
+      { name:"Personal", color:"var(--orange)", goal:"", m:["","",""] },
+      { name:"Lopez Home", color:"var(--green)", goal:"", m:["","",""] }
+    ]
+  };
+  saveQuarterPlansStore();
+  currentQuarterId = qid;
+  renderPlanQuarter();
+}
+function deleteCurrentQuarter() {
+  const keys = getQuarterKeys();
+  if (keys.length <= 1) { alert("You need at least one quarter — add a new one before deleting this one."); return; }
+  if (!confirm('Delete "' + quarterPlansStore[currentQuarterId].label + '"? This can\'t be undone.')) return;
+  delete quarterPlansStore[currentQuarterId];
+  saveQuarterPlansStore();
+  currentQuarterId = getQuarterKeys()[0];
+  renderPlanQuarter();
+}
+
 function renderPlanQuarter() {
   const app = document.getElementById('app');
-  const notes = loadQuarterNotes();
+  const keys = getQuarterKeys();
+  if (keys.length === 0) {
+    app.innerHTML = `${navPillsHtml('plan')}${planSubNavHtml()}<p class="empty-hint">No quarters yet.</p><button class="export-btn" onclick="addNewQuarter()">+ Add a new quarter</button>`;
+    return;
+  }
+  if (!quarterPlansStore[currentQuarterId]) currentQuarterId = keys[keys.length-1];
+  const q = quarterPlansStore[currentQuarterId];
+  const year = currentQuarterId.split('-')[0];
+  const yearGoal = loadYearGoal(year);
+  const notes = loadQuarterNotes(currentQuarterId);
+
   app.innerHTML = `${navPillsHtml('plan')}${planSubNavHtml()}
-    <h1 class="hist-title">${QUARTER_PLAN.label}</h1>
-    <div class="quarter-year-goal">
-      <label>THIS YEAR I'M WORKING TOWARD</label>
-      <input type="text" value="${escapeHtml(notes.yearGoal)}" oninput="saveQuarterNotes({...loadQuarterNotes(), yearGoal:this.value})">
+    <div class="plan-week-nav">${quarterSelectHtml(currentQuarterId)}</div>
+    <div class="plan-manage-row">
+      <button class="plan-manage-btn" onclick="addNewQuarter()">+ Add new quarter</button>
+      <button class="plan-manage-btn plan-danger" onclick="deleteCurrentQuarter()">Delete this quarter</button>
     </div>
-    <div class="recovery-banner" style="margin-bottom:14px;">${escapeHtml(QUARTER_PLAN.recoveryBanner)}</div>
-    ${QUARTER_PLAN.categories.map(c => `
+    <h1 class="hist-title">${escapeHtml(q.label)}</h1>
+    <div class="quarter-year-goal">
+      <label>THIS YEAR (${escapeHtml(year)}) I'M WORKING TOWARD</label>
+      <input type="text" value="${escapeHtml(yearGoal)}" oninput="saveYearGoal('${year}', this.value)">
+    </div>
+    <label class="plan-field-label">Context banner for this quarter (optional — e.g. a recovery window, a big deadline)</label>
+    <textarea rows="2" class="plan-input" oninput="updateQuarterField('${currentQuarterId}','recoveryBanner',this.value)" onblur="saveQuarterPlansStore(); renderPlanQuarter()">${escapeHtml(q.recoveryBanner||'')}</textarea>
+    ${q.recoveryBanner ? `<div class="recovery-banner" style="margin:8px 0 14px;">${escapeHtml(q.recoveryBanner)}</div>` : ''}
+    ${q.categories.map((c,i) => `
       <div class="quarter-cat-card" style="border-color:${c.color}">
         <h4 style="color:${c.color}">${escapeHtml(c.name)}</h4>
-        <div class="quarter-cat-goal">${escapeHtml(c.goal)}</div>
+        <textarea class="quarter-cat-goal-input" rows="2" placeholder="quarter goal..." oninput="updateQuarterCategoryField('${currentQuarterId}',${i},'goal',this.value)" onblur="saveQuarterPlansStore()">${escapeHtml(c.goal)}</textarea>
         <div class="quarter-months">
-          <div class="quarter-month-box"><div class="mlabel">JULY</div><div class="mtext">${escapeHtml(c.jul)}</div></div>
-          <div class="quarter-month-box"><div class="mlabel">AUGUST</div><div class="mtext">${escapeHtml(c.aug)}</div></div>
-          <div class="quarter-month-box"><div class="mlabel">SEPTEMBER</div><div class="mtext">${escapeHtml(c.sep)}</div></div>
+          ${q.months.map((mname, mi) => `
+            <div class="quarter-month-box">
+              <div class="mlabel">${escapeHtml(mname.toUpperCase())}</div>
+              <textarea class="quarter-month-input" rows="3" oninput="updateQuarterCategoryMonth('${currentQuarterId}',${i},${mi},this.value)" onblur="saveQuarterPlansStore()">${escapeHtml(c.m[mi] || '')}</textarea>
+            </div>`).join('')}
         </div>
       </div>`).join('')}
     <div class="grid2">
-      <div class="card plan-reflect"><h3>END OF QUARTER — CARRY TO Q4</h3>
-        <textarea rows="4" oninput="saveQuarterNotes({...loadQuarterNotes(), carryToQ4:this.value})">${escapeHtml(notes.carryToQ4)}</textarea>
+      <div class="card plan-reflect"><h3>END OF QUARTER — CARRY FORWARD</h3>
+        <textarea rows="4" oninput="saveQuarterNotes('${currentQuarterId}', {...loadQuarterNotes('${currentQuarterId}'), carryToNext:this.value})">${escapeHtml(notes.carryToNext)}</textarea>
       </div>
       <div class="card plan-reflect"><h3>BIGGEST WIN THIS QUARTER</h3>
-        <textarea rows="4" oninput="saveQuarterNotes({...loadQuarterNotes(), biggestWin:this.value})">${escapeHtml(notes.biggestWin)}</textarea>
+        <textarea rows="4" oninput="saveQuarterNotes('${currentQuarterId}', {...loadQuarterNotes('${currentQuarterId}'), biggestWin:this.value})">${escapeHtml(notes.biggestWin)}</textarea>
       </div>
     </div>`;
 }

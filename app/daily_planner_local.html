@@ -1616,17 +1616,27 @@ function runQuarterBreakdownFlow(qid, catIndex) {
   const goal = (cat.goal || "").trim();
   if (!goal) { alert("Write a quarter goal for this category first, then break it down."); return; }
 
-  const weekKeys = getWeeklyPlanKeys().filter(ws => {
+  const today = todayStr();
+  // Only treat this as "mid-quarter" if today actually falls inside THIS quarter's own
+  // dates — planning a future quarter ahead of time shouldn't skip anything.
+  const quarterIsActive = !!(q.startDate && q.endDate && today >= q.startDate && today <= q.endDate);
+  const activeMonth = quarterIsActive ? findQuarterAndMonthForDate(today) : null;
+  const currentMonthIdx = (activeMonth && activeMonth.qid === qid) ? activeMonth.mi : -1;
+
+  let weekKeys = getWeeklyPlanKeys().filter(ws => {
     const wp = weeklyPlansStore[ws];
     return q.startDate && q.endDate && ws >= q.startDate && wp.end <= q.endDate;
   });
+  // Skip weeks that have already fully ended — don't rewrite the past.
+  if (quarterIsActive) weekKeys = weekKeys.filter(ws => weeklyPlansStore[ws].end >= today);
   const weeksPayload = weekKeys.map(ws => ({ start: ws, end: weeklyPlansStore[ws].end }));
 
   renderBreakdownLoading(goal);
   callQuarterBreakdownAPI(goal, q.months, weeksPayload).then(data => {
     pendingQuarterBreakdown = {
       qid, catIndex, goal,
-      months: data.months.map(text => ({ text, include: true })),
+      skippedPast: quarterIsActive && currentMonthIdx > 0,
+      months: data.months.map((text, i) => ({ text, include: currentMonthIdx < 0 || i >= currentMonthIdx })),
       weeks: weekKeys.map(ws => ({
         key: ws,
         label: fmtShort(ws) + " – " + fmtShort(weeklyPlansStore[ws].end),
@@ -1658,6 +1668,7 @@ function renderQuarterBreakdownModal() {
     <div class="modal" style="margin-top:30px;">
       <h2>Quarter goal, broken down</h2>
       <p class="sub">From: &ldquo;${escapeHtml(pendingQuarterBreakdown.goal)}&rdquo;. Keep what's useful — checked items get written into the Quarter's month columns and into each week's task.</p>
+      ${pendingQuarterBreakdown.skippedPast ? `<p class="sub" style="color:#a53a3a;">Weeks that already ended were left out entirely, and earlier months are shown for reference but left unchecked, so nothing already-past gets overwritten by accident.</p>` : ``}
       <p class="sub" style="margin-top:14px; font-weight:700; color:#666;">MONTHLY MILESTONES</p>
       ${monthsHtml}
       <p class="sub" style="margin-top:14px; font-weight:700; color:#666;">WEEKLY TASKS</p>

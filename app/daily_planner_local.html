@@ -1364,6 +1364,7 @@ function renderPlanQuarter() {
       <div class="quarter-cat-card" style="border-color:${c.color}">
         <h4 style="color:${c.color}">${escapeHtml(c.name)}</h4>
         <textarea class="quarter-cat-goal-input" rows="2" placeholder="quarter goal..." oninput="updateQuarterCategoryField('${currentQuarterId}',${i},'goal',this.value)" onblur="saveQuarterPlansStore()">${escapeHtml(c.goal)}</textarea>
+        <button class="breakdown-btn" style="margin-bottom:8px;" onclick="runQuarterBreakdownFlow('${currentQuarterId}',${i})">🧩 Break it down into months &amp; weeks</button>
         <div class="quarter-months">
           ${q.months.map((mname, mi) => `
             <div class="quarter-month-box">
@@ -1570,6 +1571,106 @@ async function confirmBreakdown() {
 
   pendingBreakdown = null;
   render();
+}
+
+// ---------- AI quarter-goal breakdown (goal -> month milestones + per-week tasks) ----------
+let pendingQuarterBreakdown = null;
+
+async function callQuarterBreakdownAPI(goal, months, weeks) {
+  if (!BREAKDOWN_FUNCTION_URL || BREAKDOWN_FUNCTION_URL.startsWith("PASTE_")) {
+    throw new Error("Breakdown isn't set up yet — the app needs a Supabase Edge Function URL and shared secret filled in near the top of this file.");
+  }
+  const resp = await fetch(BREAKDOWN_FUNCTION_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-planner-secret": BREAKDOWN_SHARED_SECRET },
+    body: JSON.stringify({ goal, mode: "quarter", months, weeks })
+  });
+  let data;
+  try { data = await resp.json(); } catch (e) { throw new Error("Breakdown service returned an unexpected response (HTTP " + resp.status + ")."); }
+  if (!resp.ok) throw new Error(data.error || ("Breakdown request failed (HTTP " + resp.status + ")."));
+  if (!Array.isArray(data.months) || data.months.length !== 3) throw new Error("Didn't get a usable breakdown back — try rephrasing the goal.");
+  return data;
+}
+
+function runQuarterBreakdownFlow(qid, catIndex) {
+  const q = quarterPlansStore[qid];
+  const cat = q.categories[catIndex];
+  const goal = (cat.goal || "").trim();
+  if (!goal) { alert("Write a quarter goal for this category first, then break it down."); return; }
+
+  const weekKeys = getWeeklyPlanKeys().filter(ws => {
+    const wp = weeklyPlansStore[ws];
+    return q.startDate && q.endDate && ws >= q.startDate && wp.end <= q.endDate;
+  });
+  const weeksPayload = weekKeys.map(ws => ({ start: ws, end: weeklyPlansStore[ws].end }));
+
+  renderBreakdownLoading(goal);
+  callQuarterBreakdownAPI(goal, q.months, weeksPayload).then(data => {
+    pendingQuarterBreakdown = {
+      qid, catIndex, goal,
+      months: data.months.map(text => ({ text, include: true })),
+      weeks: weekKeys.map(ws => ({
+        key: ws,
+        label: fmtShort(ws) + " – " + fmtShort(weeklyPlansStore[ws].end),
+        text: data.weeks[ws] || "",
+        include: !!data.weeks[ws]
+      })).filter(w => w.text)
+    };
+    renderQuarterBreakdownModal();
+  }).catch(err => {
+    renderBreakdownError(goal, err.message);
+  });
+}
+
+function renderQuarterBreakdownModal() {
+  const app = document.getElementById('app');
+  const q = quarterPlansStore[pendingQuarterBreakdown.qid];
+  const monthsHtml = pendingQuarterBreakdown.months.map((m, i) => `
+    <div class="item">
+      <input type="checkbox" ${m.include ? "checked" : ""} onchange="toggleQuarterBreakdownMonth(${i})">
+      <div><span class="src">${escapeHtml(q.months[i])}</span><div class="txt">${escapeHtml(m.text)}</div></div>
+    </div>`).join("");
+  const weeksHtml = pendingQuarterBreakdown.weeks.length ? pendingQuarterBreakdown.weeks.map((w, i) => `
+    <div class="item">
+      <input type="checkbox" ${w.include ? "checked" : ""} onchange="toggleQuarterBreakdownWeek(${i})">
+      <div><span class="src">Week of ${escapeHtml(w.label)}</span><div class="txt">${escapeHtml(w.text)}</div></div>
+    </div>`).join("") : `<p class="empty-hint">No weeks exist yet within this quarter's dates — add some on the This Week tab to get week-level tasks too.</p>`;
+
+  app.innerHTML = `
+    <div class="modal" style="margin-top:30px;">
+      <h2>Quarter goal, broken down</h2>
+      <p class="sub">From: &ldquo;${escapeHtml(pendingQuarterBreakdown.goal)}&rdquo;. Keep what's useful — checked items get written into the Quarter's month columns and into each week's task.</p>
+      <p class="sub" style="margin-top:14px; font-weight:700; color:#666;">MONTHLY MILESTONES</p>
+      ${monthsHtml}
+      <p class="sub" style="margin-top:14px; font-weight:700; color:#666;">WEEKLY TASKS</p>
+      ${weeksHtml}
+      <button class="start-btn" onclick="confirmQuarterBreakdown()">Apply to Quarter &amp; Weeks</button>
+      <button class="skip-btn" onclick="cancelQuarterBreakdown()">Cancel</button>
+    </div>`;
+}
+function toggleQuarterBreakdownMonth(i) { pendingQuarterBreakdown.months[i].include = !pendingQuarterBreakdown.months[i].include; renderQuarterBreakdownModal(); }
+function toggleQuarterBreakdownWeek(i) { pendingQuarterBreakdown.weeks[i].include = !pendingQuarterBreakdown.weeks[i].include; renderQuarterBreakdownModal(); }
+function cancelQuarterBreakdown() { pendingQuarterBreakdown = null; renderPlanQuarter(); }
+
+function confirmQuarterBreakdown() {
+  const { qid, catIndex, months, weeks } = pendingQuarterBreakdown;
+  const q = quarterPlansStore[qid];
+  const catName = q.categories[catIndex].name;
+
+  months.forEach((m, i) => { if (m.include) q.categories[catIndex].m[i] = m.text; });
+  saveQuarterPlansStore();
+
+  weeks.forEach(w => {
+    if (!w.include) return;
+    const weekPlan = weeklyPlansStore[w.key];
+    if (!weekPlan) return;
+    const weekCat = weekPlan.categories.find(c => c.name === catName);
+    if (weekCat) weekCat.task = w.text;
+  });
+  saveWeeklyPlansStore();
+
+  pendingQuarterBreakdown = null;
+  renderPlanQuarter();
 }
 
 function collectUnfinished(rec) {

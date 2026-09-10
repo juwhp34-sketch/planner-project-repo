@@ -1163,6 +1163,42 @@ function deleteCurrentWeek() {
   renderPlanWeek();
 }
 
+// Find which quarter + which month-within-that-quarter a date falls in, using the
+// quarter's own startDate/endDate and month-name list (so this works for any quarter,
+// not just the ones seeded by default).
+function findQuarterAndMonthForDate(dateStr) {
+  const keys = getQuarterKeys();
+  const qid = keys.find(k => { const q = quarterPlansStore[k]; return q.startDate && q.endDate && dateStr >= q.startDate && dateStr <= q.endDate; });
+  if (!qid) return null;
+  const q = quarterPlansStore[qid];
+  const monthName = new Date(dateStr + "T12:00:00").toLocaleDateString('en-US', { month:'long' });
+  const mi = q.months.findIndex(m => m.trim().toLowerCase() === monthName.toLowerCase());
+  if (mi < 0) return null;
+  return { qid, mi };
+}
+
+function fillWeekFromQuarter(ws) {
+  const plan = weeklyPlansStore[ws];
+  // Use the week's END date's month — for a week spanning a month boundary, most of its
+  // days (and the narrative intent) usually belong to the later month.
+  const found = findQuarterAndMonthForDate(plan.end);
+  if (!found) {
+    alert("Couldn't find a Quarter covering this week. Check that a quarter's start/end dates (on the Quarter tab) actually span this week's dates.");
+    return;
+  }
+  const q = quarterPlansStore[found.qid];
+  if (!confirm(`This will replace each category's task for this week with ${q.months[found.mi]}'s goal from "${q.label}". Continue?`)) return;
+
+  plan.categories.forEach(cat => {
+    const qCat = q.categories.find(c => c.name === cat.name);
+    if (qCat && qCat.m[found.mi] && qCat.m[found.mi].trim()) {
+      cat.task = qCat.m[found.mi].trim();
+    }
+  });
+  saveWeeklyPlansStore();
+  renderPlanWeek();
+}
+
 function renderPlanWeek() {
   const app = document.getElementById('app');
   const keys = getWeeklyPlanKeys();
@@ -1189,6 +1225,7 @@ function renderPlanWeek() {
       <button onclick="planWeekNext()" ${planWeekIndex===keys.length-1?'disabled':''}>›</button>
     </div>
     <div class="plan-manage-row">
+      <button class="plan-manage-btn" onclick="fillWeekFromQuarter('${ws}')">↻ Fill from Quarter</button>
       <button class="plan-manage-btn" onclick="addNewWeek()">+ Add new week</button>
       <button class="plan-manage-btn plan-danger" onclick="deleteCurrentWeek()">Delete this week</button>
     </div>

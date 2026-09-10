@@ -534,6 +534,36 @@ function blankRecord(dateStr) {
     if (seed.home) seed.home.forEach((t, i) => { if (rec.lanes.home[i]) rec.lanes.home[i].text = t; });
     if (typeof seed.recoveryMode === 'boolean') { rec.recoveryMode = seed.recoveryMode; rec.recoveryConfirmed = true; }
   }
+  autofillFromWeeklyPlan(rec, dateStr);
+  return rec;
+}
+
+// Pull this week's Plan straight into a brand-new day — one less decision to make.
+// Only fills fields still empty (so seeded/historical days are never overwritten), and only
+// on weekdays (Sat/Sun are rest days and shouldn't get work auto-stuffed into them).
+function findWeeklyPlanForDate(dateStr) {
+  const keys = getWeeklyPlanKeys();
+  return keys.find(k => dateStr >= k && dateStr <= weeklyPlansStore[k].end);
+}
+function autofillFromWeeklyPlan(rec, dateStr) {
+  const dow = dowOf(dateStr);
+  if (dow === 0 || dow === 6) return rec;
+  const ws = findWeeklyPlanForDate(dateStr);
+  if (!ws) return rec;
+  const plan = weeklyPlansStore[ws];
+  const focusCatName = ROTATION[dow];
+  const glsCat = plan.categories.find(c => c.name === "GLS (Work)");
+  const focusCat = plan.categories.find(c => c.name === focusCatName);
+
+  if (glsCat && glsCat.task.trim() && rec.lanes.gls[0] && !rec.lanes.gls[0].text) {
+    rec.lanes.gls[0].text = glsCat.task.trim();
+  }
+  if (focusCat && focusCat.task.trim() && rec.lanes.focus[0] && !rec.lanes.focus[0].text) {
+    rec.lanes.focus[0].text = focusCat.task.trim();
+  }
+  if (focusCat && focusCat.task.trim() && rec.priorities[0] && !rec.priorities[0].text) {
+    rec.priorities[0].text = focusCat.task.trim();
+  }
   return rec;
 }
 

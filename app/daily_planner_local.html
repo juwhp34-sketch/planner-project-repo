@@ -609,14 +609,24 @@ const MONTH_THEMES = {
   3:{ name:"New Growth Green", hue:132 }, 4:{ name:"Spring Bloom Pink", hue:338 },
   5:{ name:"Sunlit Gold", hue:46 }, 6:{ name:"Open Sky Teal", hue:188 },
   7:{ name:"Midsummer Terracotta", hue:20 }, 8:{ name:"Steady Amber (Recovery)", hue:34 },
-  9:{ name:"Harvest Orange", hue:26 }, 10:{ name:"Rust & Rest", hue:14 },
+  9:{ name:"Foxes & Falling Leaves", hue:16 }, 10:{ name:"Rust & Rest", hue:14 },
   11:{ name:"Warm Cocoa", hue:28 }, 12:{ name:"Evergreen Berry", hue:352 }
 };
 const DOW_HUE_OFFSET = [-10,-4,0,4,8,14,-16]; // Sun..Sat
+// Some months rotate through several genuinely distinct hues (not just shades of one base
+// color) by day-of-month, for more real day-to-day variety. September = the woodland-autumn
+// palette: rust orange, forest green, golden amber, deep red, warm cocoa.
+const MULTI_HUE_MONTHS = {
+  9: [16, 145, 42, 8, 30]
+};
 function dayAccent(dateStr) {
   const d = new Date(dateStr + "T12:00:00");
-  const theme = MONTH_THEMES[d.getMonth()+1];
-  const hue = (theme.hue + DOW_HUE_OFFSET[d.getDay()] + 360) % 360;
+  const month = d.getMonth() + 1;
+  const theme = MONTH_THEMES[month];
+  const palette = MULTI_HUE_MONTHS[month];
+  const hue = palette
+    ? palette[(d.getDate() - 1) % palette.length]
+    : (theme.hue + DOW_HUE_OFFSET[d.getDay()] + 360) % 360;
   return { name: theme.name, fg: `hsl(${hue} 45% 36%)`, bg: `hsl(${hue} 55% 95%)` };
 }
 function monthNameFromNum(m) { return new Date(2000, m-1, 1).toLocaleDateString('en-US', { month:'long' }); }
@@ -646,15 +656,22 @@ const INSPO_QUOTES = [
   "Write it down, let it go, and pick it back up tomorrow if you need to."
 ];
 const INSPO_STICKERS = ['✨','🌿','🌟','💛','🌤️','🕊️','🌱','☀️','💫','🍃'];
+// Seasonal sticker sets override the default pool for specific months — original emoji only,
+// never copied artwork. September = woodland autumn mood (foxes, mushrooms, falling leaves).
+const SEASONAL_STICKERS = {
+  9: ['🍁','🍂','🦊','🍄','🌰','🦔']
+};
 function quoteForDate(dateStr) {
   let hash = 0;
   for (let i=0;i<dateStr.length;i++) hash = (hash*31 + dateStr.charCodeAt(i)) >>> 0;
   return INSPO_QUOTES[hash % INSPO_QUOTES.length];
 }
 function stickerForDate(dateStr) {
+  const month = new Date(dateStr + "T12:00:00").getMonth() + 1;
+  const pool = SEASONAL_STICKERS[month] || INSPO_STICKERS;
   let hash = 0;
   for (let i=0;i<dateStr.length;i++) hash = (hash*17 + dateStr.charCodeAt(i)) >>> 0;
-  return INSPO_STICKERS[hash % INSPO_STICKERS.length];
+  return pool[hash % pool.length];
 }
 
 // ---------- Modern flat mood-face icons (replaces emoji in HOW I FEEL) ----------

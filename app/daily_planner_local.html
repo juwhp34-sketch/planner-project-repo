@@ -29,8 +29,6 @@
   .iam-input:focus { outline:none; border-bottom:1px solid var(--dark); }
   .date-block { text-align:right; font-size:12px; color:#777; }
   .date-block .big { font-size:14px; color:var(--dayFg, var(--dark)); font-weight:700; }
-  .recovery-line { margin-top:6px; }
-  .recovery-toggle { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--red); cursor:pointer; }
   .rotation { font-size:11px; color:#888; border-bottom:1px dotted #ddd; padding-bottom:10px; margin-bottom:14px; }
   .rotation b { color:#555; }
   .rotation .hl { color:var(--red); font-weight:800; }
@@ -1853,12 +1851,6 @@ function render() {
       </div>
       <div class="date-block">
         <div class="big">${fmtDateHeader(state.date)}</div>
-        <div class="recovery-line">
-          <label class="recovery-toggle">
-            <input type="checkbox" ${state.recoveryMode ? "checked":""} onchange="toggleRecoveryManual(this.checked)" style="accent-color:var(--red)">
-            RECOVERY MODE
-          </label>
-        </div>
       </div>
     </div>
 
@@ -2009,7 +2001,6 @@ function setEnergy(n) { state.energy = (state.energy === n) ? n-1 : n; render();
 function togglePriorityDone(i, v, el) { state.priorities[i].done = v; persist(); if (v) celebrateAt(el); }
 function toggleLaneDone(key, i, v, el) { state.lanes[key][i].done = v; persist(); if (v) celebrateAt(el); }
 function toggleCarriedDone(i, v, el) { state.carried[i].done = v; persist(); if (v) celebrateAt(el); }
-function toggleRecoveryManual(v) { state.recoveryMode = v; state.recoveryConfirmed = true; render(); persist(); }
 function setRecovery(v) { state.recoveryMode = v; state.recoveryConfirmed = true; render(); persist(); }
 
 init();

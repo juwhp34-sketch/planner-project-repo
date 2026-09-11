@@ -77,18 +77,23 @@ Deno.serve(async (req: Request) => {
         ? weeks.map((w) => `  - key "${w.start}" (this week runs ${w.start} through ${w.end})`).join("\n")
         : "  (no weeks are being tracked yet for this quarter)";
 
+      const backlog = typeof body.backlogNotes === "string" ? body.backlogNotes.trim() : "";
+      const backlogBlock = backlog
+        ? `\nIMPORTANT — real status update: the following did NOT get finished in earlier months and is still outstanding: "${backlog}". Do NOT assume earlier months went as planned. The remaining months/weeks below need to absorb this leftover work FIRST, in addition to their own new goals — do not write the remaining months as if they're just a light final wrap-up when there's real unfinished backlog to carry.\n`
+        : "";
+
       const prompt = `You help someone with ADHD plan a quarter-long goal by breaking it into a month-by-month milestone and week-by-week tasks, so a big goal turns into small, doable pieces spread across the quarter instead of one overwhelming block.
 
 Goal for this category: "${goal}"
 
 This goal spans three months, in order: ${months[0]}, ${months[1]}, ${months[2]}.
-
+${backlogBlock}
 These specific weeks are already being tracked. Each one below shows the EXACT key you must use for it in your JSON output:
 ${weeksList}
 
-For each of the 3 months, write ONE short milestone sentence describing what should realistically be true by the end of that month if this goal is on track. Milestones should build on each other across the 3 months.
+For each of the 3 months, write ONE short milestone sentence describing what should realistically be true by the end of that month if this goal is on track — factoring in any leftover backlog noted above. Milestones should build on each other across the 3 months.
 
-For each week listed above, write ONE short, concrete task for that specific week that makes real progress toward the goal for whichever month that week falls in. Do NOT just repeat the month's milestone verbatim for every week in that month — break the month's work into a sensible progression across its weeks (e.g. week 1 might start something, week 2 continues it, week 3 finishes it). If no weeks are listed, return an empty object for "weeks".
+For each week listed above, write ONE short, concrete task for that specific week that makes real progress toward the goal for whichever month that week falls in. Do NOT just repeat the month's milestone verbatim for every week in that month — break the month's work into a sensible progression across its weeks (e.g. week 1 might start something, week 2 continues it, week 3 finishes it). If there's leftover backlog, put it in the EARLIEST upcoming weeks, not spread evenly or left until the last week. If no weeks are listed, return an empty object for "weeks".
 
 CRITICAL: in your JSON output, each key inside "weeks" must be EXACTLY the key string shown above (e.g. "${weeks[0]?.start ?? "2026-01-05"}") — just the start date, never a date range, never including the word "to" or the end date.
 

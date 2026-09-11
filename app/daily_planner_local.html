@@ -1592,14 +1592,14 @@ async function confirmBreakdown() {
 // ---------- AI quarter-goal breakdown (goal -> month milestones + per-week tasks) ----------
 let pendingQuarterBreakdown = null;
 
-async function callQuarterBreakdownAPI(goal, months, weeks) {
+async function callQuarterBreakdownAPI(goal, months, weeks, backlogNotes) {
   if (!BREAKDOWN_FUNCTION_URL || BREAKDOWN_FUNCTION_URL.startsWith("PASTE_")) {
     throw new Error("Breakdown isn't set up yet — the app needs a Supabase Edge Function URL and shared secret filled in near the top of this file.");
   }
   const resp = await fetch(BREAKDOWN_FUNCTION_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-planner-secret": BREAKDOWN_SHARED_SECRET },
-    body: JSON.stringify({ goal, mode: "quarter", months, weeks })
+    body: JSON.stringify({ goal, mode: "quarter", months, weeks, backlogNotes: backlogNotes || "" })
   });
   let data;
   try { data = await resp.json(); } catch (e) { throw new Error("Breakdown service returned an unexpected response (HTTP " + resp.status + ")."); }
@@ -1629,8 +1629,17 @@ function runQuarterBreakdownFlow(qid, catIndex) {
   if (quarterIsActive) weekKeys = weekKeys.filter(ws => weeklyPlansStore[ws].end >= today);
   const weeksPayload = weekKeys.map(ws => ({ start: ws, end: weeklyPlansStore[ws].end }));
 
+  // Only earlier months actually exist to ask about — skip the question entirely otherwise.
+  let backlogNotes = "";
+  if (quarterIsActive && currentMonthIdx > 0) {
+    backlogNotes = prompt(
+      "Anything from " + q.months.slice(0, currentMonthIdx).join("/") + " that didn't actually get finished and needs to carry into what's left? (Leave blank if everything's on track.)",
+      ""
+    ) || "";
+  }
+
   renderBreakdownLoading(goal);
-  callQuarterBreakdownAPI(goal, q.months, weeksPayload).then(data => {
+  callQuarterBreakdownAPI(goal, q.months, weeksPayload, backlogNotes).then(data => {
     pendingQuarterBreakdown = {
       qid, catIndex, goal,
       skippedPast: quarterIsActive && currentMonthIdx > 0,
